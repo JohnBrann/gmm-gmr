@@ -26,8 +26,8 @@ for idx, file in enumerate(files):
         timestamps = np.array(f["timestamps"])
         states = np.array(f["states"])  # shape: (n_timesteps, state_dim)
 
-    # Extract the first three elements assuming [x, y, z] positions
-    raw_trajectory = states[:, :3]
+    # Skip the first column (time) and extract the next three elements as [x, y, z] positions
+    raw_trajectory = states[:, 1:4]
 
     # Plot the 3D trajectory
     ax_3d.plot(
@@ -48,14 +48,15 @@ ax_3d.legend()
 fig_3d.savefig("all_demos_3d.png")
 
 # -------------------------------------------------
-# 2) Create 2D subplots for Y and Z vs. Time
+# 2) Create 2D subplots for X, Y, and Z vs. Time
 # -------------------------------------------------
-fig_2d, axs = plt.subplots(nrows=2, ncols=1, figsize=(8, 6), sharex=True)
+fig_2d, axs = plt.subplots(nrows=3, ncols=1, figsize=(8, 9), sharex=True)
 
 # Set axis labels for each subplot
-axs[0].set_ylabel('Y')
-axs[1].set_ylabel('Z')
-axs[1].set_xlabel('Time (s)')
+axs[0].set_ylabel('X')
+axs[1].set_ylabel('Y')
+axs[2].set_ylabel('Z')
+axs[2].set_xlabel('Time (s)')
 
 for idx, file in enumerate(files):
     file_path = os.path.join(folder_path, file)
@@ -63,16 +64,17 @@ for idx, file in enumerate(files):
         timestamps = np.array(f["timestamps"])
         states = np.array(f["states"])
 
-    raw_trajectory = states[:, :3]
+    # Skip the first column (time) and extract columns 1-3 as [x, y, z]
+    raw_trajectory = states[:, 1:4]
 
-    # Plot Y vs. time
-    axs[0].plot(timestamps, raw_trajectory[:, 1], color=colors[idx], label=file)
-    # Plot Z vs. time
-    axs[1].plot(timestamps, raw_trajectory[:, 2], color=colors[idx], label=file)
+    # Plot X, Y, and Z vs. time in corresponding subplots
+    axs[0].plot(timestamps, raw_trajectory[:, 0], color=colors[idx], label=file)
+    axs[1].plot(timestamps, raw_trajectory[:, 1], color=colors[idx], label=file)
+    axs[2].plot(timestamps, raw_trajectory[:, 2], color=colors[idx], label=file)
 
-axs[0].set_title('Demonstrations Over Time (Y and Z Only)')
+axs[0].set_title('Demonstrations Over Time (X, Y, and Z)')
 
-# Show a legend in the top subplot (optional)
+# Optionally, show a legend in the top subplot
 axs[0].legend()
 
 # Save the 2D figure
