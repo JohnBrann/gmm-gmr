@@ -87,30 +87,25 @@ import os
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D  # Registers the 3D projection
+from mpl_toolkits.mplot3d import Axes3D 
 
-# Folder containing demonstration HDF5 files
 folder_path = "demonstrations"
 
-# Get a list of all .h5 files in the folder
+# Get all files in demonstration folder
 files = [f for f in os.listdir(folder_path) if f.endswith('.h5')]
 
-# -------------------------------------------------
-# 1) Create a 3D plot for all demonstrations
-# -------------------------------------------------
+# 3d demonstration plot
 fig_3d = plt.figure()
 ax_3d = fig_3d.add_subplot(111, projection='3d')
 
-# Generate a unique color for each demonstration (up to 10 distinct colors here)
+
 colors = plt.cm.tab10(np.linspace(0, 1, len(files)))
 
 for idx, file in enumerate(files):
     file_path = os.path.join(folder_path, file)
     with h5py.File(file_path, "r") as f:
-        # Load timestamps and end-effector positions (x, y, z)
         timestamps = np.array(f["timestamps"])
-        positions = np.array(f["eef_positions"])  # shape: (n_timesteps, 3)
-
+        positions = np.array(f["eef_positions"]) 
     # Plot the 3D trajectory
     ax_3d.plot(
         positions[:, 0],
@@ -126,15 +121,11 @@ ax_3d.set_zlabel('Z')
 ax_3d.set_title('3D End-Effector Trajectories from All Demonstrations')
 ax_3d.legend()
 
-# Save the 3D figure
 fig_3d.savefig("all_demos_3d.png")
 
-# -------------------------------------------------
-# 2) Create 2D subplots for X, Y, and Z vs. Time
-# -------------------------------------------------
+# 2D plots for x, y and z end effector positions
 fig_2d, axs = plt.subplots(nrows=3, ncols=1, figsize=(8, 9), sharex=True)
 
-# Set axis labels for each subplot
 axs[0].set_ylabel('X')
 axs[1].set_ylabel('Y')
 axs[2].set_ylabel('Z')
@@ -146,18 +137,14 @@ for idx, file in enumerate(files):
         timestamps = np.array(f["timestamps"])
         positions = np.array(f["eef_positions"])
 
-    # Plot X, Y, and Z vs. time in corresponding subplots
+    # plot X, Y, and Z vs. time in corresponding subplots
     axs[0].plot(timestamps, positions[:, 0], color=colors[idx], label=file)
     axs[1].plot(timestamps, positions[:, 1], color=colors[idx], label=file)
     axs[2].plot(timestamps, positions[:, 2], color=colors[idx], label=file)
 
 axs[0].set_title('End-Effector Demonstrations Over Time (X, Y, and Z)')
-
-# Optionally, show a legend in the top subplot
 axs[0].legend()
 
-# Save the 2D figure
 fig_2d.savefig("all_demos_2d.png")
-
 plt.show()
 

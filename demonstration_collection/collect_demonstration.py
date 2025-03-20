@@ -145,12 +145,11 @@ import h5py
 import numpy as np
 import time
 
-# Ensure the demonstrations folder exists
 folder_path = "demonstrations"
 if not os.path.exists(folder_path):
     os.makedirs(folder_path)
 
-# Joystick setup
+# joystick setup
 pygame.init()
 pygame.joystick.init()
 if pygame.joystick.get_count() == 0:
@@ -158,7 +157,7 @@ if pygame.joystick.get_count() == 0:
 joystick = pygame.joystick.Joystick(0)
 joystick.init()
 
-# suite setup: using the "Lift" environment with the UR5e robot
+# env setup
 env = suite.make(
     env_name="Lift",
     robots="UR5e",
@@ -167,7 +166,8 @@ env = suite.make(
     use_camera_obs=False,
     control_freq=20,
     initialization_noise=None,
-    horizon=2000,  # length of simulation (in timesteps)
+    # horizon is length of sim, measured in 1/100 of a second
+    horizon=2000,  
 )
 
 obs = env.reset()
@@ -175,11 +175,11 @@ running = True
 start_time = time.time()
 last_render_time = start_time
 
-eef_positions = []  # to store end-effector Cartesian positions
+eef_positions = [] 
 actions = []
 timestamps = []
 
-# Sensitivity multipliers (adjust as needed)
+# sensitivity multipliers (may change with different controllers)
 arm_scaling = 0.125
 wrist_scaling = 0.1
 rotation_scaling = 0.1
@@ -189,19 +189,20 @@ deadzone = 0.1
 def apply_deadzone(value, threshold):
     if abs(value) < threshold:
         return 0.0
-    return value * (abs(value) - threshold) / (1 - threshold)  # simple smoothing
+    return value * (abs(value) - threshold) / (1 - threshold)  # llm generated smoothing
 
-# Main loop for collecting demonstration data
+# # loop
 while running:
+    # break condition, event get as well
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
             break
-
+     # extraneous error handling
     if not running:
         break
 
-    # Read joystick inputs and apply deadzone
+    # read inputs, apply deadzones
     left_stick_x = apply_deadzone(joystick.get_axis(0), deadzone)
     left_stick_y = apply_deadzone(joystick.get_axis(1), deadzone)
     right_stick_x = apply_deadzone(joystick.get_axis(3), deadzone)
