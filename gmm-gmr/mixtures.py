@@ -17,22 +17,31 @@ from sklearn.mixture import GaussianMixture
 
 class GMM_GMR(object):
     """
-    Implementation of GMM-GMR based imitation
+    Implementation of GMM-GMR based imitation.
+    
+    This version has been modified to scale the temporal dimension so that the generated
+    trajectory reflects the actual demonstration time (e.g., 5 seconds) instead of using
+    raw step indices.
     """
-    def __init__(self, trajectories, n_components):
-        '''
+    def __init__(self, trajectories, n_components, demo_duration=5.0):
+        """
         :param trajectories: Trajectories obtained from demonstrations. If these are not
-        an aligned numpy array (i.e. list of non-aligned trajectories) they are aligned.
-        :param n_components: Number of PCA components
-        '''
+            an aligned numpy array (i.e. list of non-aligned trajectories) they are aligned.
+            (Each trajectory is assumed to have shape (T, D), where D includes spatial data.)
+        :param n_components: Number of PCA components.
+        :param demo_duration: The actual duration (in seconds) of the demonstration.
+            This is used to scale the temporal dimension.
+        """
+        self.demo_duration = demo_duration
+        
         if isinstance(trajectories, list):
             self.trajectories = np.array(align_trajectories(trajectories))
         else:
             self.trajectories = trajectories
 
-        self.T = self.trajectories.shape[1]
-        self.N = self.trajectories.shape[0]
-        self.D = self.trajectories.shape[2]
+        self.T = self.trajectories.shape[1]  # number of time steps
+        self.N = self.trajectories.shape[0]  # number of demonstrations
+        self.D = self.trajectories.shape[2]  # data dimensions
 
         self.pca = PCA(n_components)
 
@@ -41,8 +50,11 @@ class GMM_GMR(object):
         trajectories_latent = self.pca.fit_transform(self.trajectories.reshape(-1, self.D))
         print("Explained variance: {}%".format(np.sum(self.pca.explained_variance_ratio_) * 100))
 
-        # Create a temporal dimension (time steps)
-        temporal = np.array([range(self.T)] * self.N).reshape(-1, 1)
+        # Scale the time axis so that the entire demonstration lasts demo_duration seconds.
+        time_scale = self.demo_duration / self.T
+        # Instead of using raw indices 0,1,...,T-1, we use scaled time in seconds.
+        temporal = np.array([np.arange(self.T) * time_scale] * self.N).reshape(-1, 1)
+
         spatio_temporal = np.concatenate((temporal, trajectories_latent), axis=1)
 
         # Use BIC to select the best number of mixtures
@@ -62,11 +74,18 @@ class GMM_GMR(object):
 
         self.gmr = GMR(self.gmm)
         self.centers = self.gmm.means_
-        self.centers_temporal = self.centers[:, 0]
+        self.centers_temporal = self.centers[:, 0]  # these are now in seconds
         self.centers_spatial_latent = self.centers[:, 1:]
         self.centers_spatial = self.pca.inverse_transform(self.centers_spatial_latent)
 
     def generate_trajectory(self, interval=0.1):
+        """
+        Generate a trajectory using GMR.
+        
+        :param interval: The sampling interval (in seconds) for the generated trajectory.
+        :return: A tuple (times, trajectory), where 'times' are in seconds and 'trajectory'
+                 is the spatial data reconstructed from the latent space.
+        """
         times = np.arange(min(self.centers_temporal), max(self.centers_temporal) + interval, interval)
         trj = []
         for t in times:
