@@ -21,19 +21,30 @@ This project is developed using the **robosuite** framework with the **UR5e** ro
 
 - Ubuntu 22.04
 - Anaconda
-- Python 3.x
 - robosuite
 
 ### Installation
 
 1. **Clone the repository**  
    ```bash
-   git clone <repo-url>
-   cd <repo-name>
+   git clone https://github.com/JohnBrann/gmm-gmr
+   cd gmm-gmr
 
 2. **Create Conda Environment**
    ```bash
    conda env create -f robosuite_env.yml
+---
+
+### Running Code
+1. **Activate Conda**
+   ```bash
+   conda activate robosuite_env
+2. **Run Bash Script**  
+   ```bash
+   ./pipeline_script.sh
+   
+Note: Before running, make sure there are no demonstrations, smoothed_demonstrations, or skill files directly in their associated folders
+
 ---
 
 ## Results
