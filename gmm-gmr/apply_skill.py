@@ -2,15 +2,10 @@ import time
 import h5py
 import numpy as np
 import robosuite as suite
+import os
+import sys
 
 def load_skill_from_h5(file_path):
-    """
-    Loads the skill trajectory from an HDF5 file.
-    
-    Returns:
-        times (np.array): Array of time stamps.
-        trajectory (np.array): Array of end-effector positions (x, y, z) for each time step.
-    """
     with h5py.File(file_path, "r") as f:
         times = np.array(f["times"])
         trajectory = np.array(f["trajectory"])
@@ -35,10 +30,11 @@ def move_to_target(env, target, control_interval=0.1, scaling=1.0, acceptance_th
             break
         delta = scaling * error
         action = np.concatenate((delta, fixed_orientation, [0]))
+        
         obs, _, _, _ = env.step(action)
         current = np.array(obs["robot0_eef_pos"])
         env.render()
-        time.sleep(control_interval)
+        time.sleep(control_interval) 
         step += 1
     else:
         print("Max steps reached without converging to the target.")
@@ -47,7 +43,7 @@ def apply_skill_trajectory(skill_file, control_interval=0.1, scaling=1.0, accept
     times, trajectory = load_skill_from_h5(skill_file)
     
     # create env
-    controller_config = suite.load_controller_config(default_controller="OSC_POSE")
+    controller_config = suite.load_controller_config(default_controller="OSC_POSE") # controller
     env = suite.make(
         env_name="Lift",
         robots="UR5e",
@@ -64,8 +60,10 @@ def apply_skill_trajectory(skill_file, control_interval=0.1, scaling=1.0, accept
     
     # move to the starting point of the trajectory.
     starting_point = trajectory[0]
-    print("Moving to starting point:", starting_point)
-    move_to_target(env, starting_point, control_interval, scaling, acceptance_threshold)
+    print("Moving to starting position:", starting_point)
+    move_to_target(env, starting_point, control_interval, scaling, acceptance_threshold=0.01)
+
+    time.sleep(2.0)
     
     # Iterate through the trajectory points.
     for i, point in enumerate(trajectory):
@@ -73,10 +71,11 @@ def apply_skill_trajectory(skill_file, control_interval=0.1, scaling=1.0, accept
         move_to_target(env, point, control_interval, scaling, acceptance_threshold)
     
     # stay at last postition of trajectory
-    print("At final position.")
-    hold_action = np.zeros(env.action_dim)
+    print("Reached final position.")
+    # keep arm in place at end
+    hold_action = np.zeros(env.action_dim) 
     for _ in range(20):
-        obs, _, _, _ = env.step(hold_action)
+        _, _, _, _ = env.step(hold_action)
         env.render()
         time.sleep(control_interval)
     
@@ -84,5 +83,10 @@ def apply_skill_trajectory(skill_file, control_interval=0.1, scaling=1.0, accept
     env.close()
 
 if __name__ == "__main__":
-    skill_file_path = "skills/skill_1.h5"
+    skills_dir = "skills"
+    if not os.path.exists(skills_dir):
+        print("No skills available...")
+        sys.exit()
+
+    skill_file_path = os.path.join(skills_dir, "skill_1.h5")
     apply_skill_trajectory(skill_file_path, control_interval=0.1, scaling=5.0, acceptance_threshold=0.1)
