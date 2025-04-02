@@ -4,7 +4,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 #  smooth the trajectory using cubic interpolation.
-def smooth_trajectory(data, num_samples=200, kind='cubic'):
+def smooth_trajectory(data, num_samples=50, kind='cubic'):
     n_timesteps, n_features = data.shape
     # Create a normalized time vector for the raw data.
     original_t = np.linspace(0, 1, n_timesteps)
@@ -16,21 +16,19 @@ def smooth_trajectory(data, num_samples=200, kind='cubic'):
     for i in range(n_features):
         f_interp = interp1d(original_t, data[:, i], kind=kind, fill_value="extrapolate")
         smoothed[:, i] = f_interp(resampled_t)
-    
     return smoothed
 
-# Folder paths
-raw_folder = "demonstrations"
-smoothed_folder = "smoothed_demonstrations"
+raw_demo_folder = "demonstrations"
+smoothed_demo_folder = "smoothed_demonstrations"
 
-if not os.path.exists(smoothed_folder):
-    os.makedirs(smoothed_folder)
-files = [f for f in os.listdir(raw_folder) if f.endswith('.h5')]
+if not os.path.exists(smoothed_demo_folder):
+    os.makedirs(smoothed_demo_folder)
+files = [f for f in os.listdir(raw_demo_folder) if f.endswith('.h5')]
 
-num_samples = 200
+num_samples = 50 #number of samples on curve
 
 for filename in files:
-    raw_file_path = os.path.join(raw_folder, filename)
+    raw_file_path = os.path.join(raw_demo_folder, filename)
     
     # Open the raw demonstration file.
     with h5py.File(raw_file_path, "r") as f:
@@ -43,7 +41,7 @@ for filename in files:
     smoothed_timestamps = np.linspace(raw_timestamps[0], raw_timestamps[-1], num_samples)
     
     new_filename = "smoothed_" + filename
-    smoothed_file_path = os.path.join(smoothed_folder, new_filename)
+    smoothed_file_path = os.path.join(smoothed_demo_folder, new_filename)
     
     with h5py.File(smoothed_file_path, "w") as f:
         f.create_dataset("timestamps", data=smoothed_timestamps)
