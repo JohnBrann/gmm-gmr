@@ -58,7 +58,8 @@ class GMM_GMR(object):
         spatio_temporal = np.concatenate((temporal, trajectories_latent), axis=1)
 
         # Use BIC to select the best number of mixtures
-        components = [5, 10, 15, 20, 25, 30, 35, 40, 45]
+        # components = [5, 10, 15, 20, 25, 30, 35, 40, 45]
+        components = [2,3,4,5] # number of gaussians 
         bics = []
         for c in components:
             gmm = GaussianMixture(n_components=c)
