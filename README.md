@@ -22,6 +22,7 @@ This project is developed using the **robosuite** framework with the **UR5e** ro
 - Ubuntu 22.04
 - Anaconda
 - robosuite
+- Controller for collecting demonstrations (currently not compatable with keyboard)
 
 ### Installation
 
