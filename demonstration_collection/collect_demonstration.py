@@ -28,7 +28,7 @@ env = suite.make(
     control_freq=20,
     initialization_noise=None,
     # horizon is length of sim, measured in 1/100 of a second
-    horizon=2000,  
+    horizon=5000000,  
 )
 
 obs = env.reset()
@@ -52,6 +52,9 @@ def apply_deadzone(value, threshold):
         return 0.0
     return value * (abs(value) - threshold) / (1 - threshold)  # llm generated smoothing
 
+record_button_held = False
+recording = False
+
 # # loop
 while running:
     # break condition, event get as well
@@ -72,6 +75,8 @@ while running:
     right_trigger = apply_deadzone(1 + joystick.get_axis(5), deadzone)
     grip_button_close = joystick.get_button(0)  # A button
     grip_button_open = joystick.get_button(1)   # B button
+    record_button = joystick.get_button(2)      # X button
+    end_button = joystick.get_button(3)         # Y button
 
     # Construct action vector based on your controller inputs
     action = np.zeros(env.action_dim)
@@ -98,12 +103,21 @@ while running:
         raise ValueError("End-effector position not found in observation!")
     
     # Append the data for this timestep
-    actions.append(action)
-    eef_positions.append(eef_pos)
-    print("Current robot EE:", obs["robot0_eef_pos"])
-    # print("Commanded EE:", desired_abs)
+    # record
+    if record_button:
+        if not record_button_held:
+            record_button_held = True
+            recording = not recording
+            print(f"Recording {'started' if recording else 'ended'}")
+    elif record_button_held:
+        record_button_held = False
+    if recording:
+        actions.append(action)
+        eef_positions.append(eef_pos)
+        print("Current robot EE:", obs["robot0_eef_pos"])
+        # print("Commanded EE:", desired_abs)
+        timestamps.append(time.time() - start_time)
 
-    timestamps.append(time.time() - start_time)
 
     # Render at the control frequency
     current_time = time.time()
@@ -111,6 +125,8 @@ while running:
         env.render()
         last_render_time = current_time
 
+    if end_button:
+        done = True
     if done:
         print("Episode complete")
         running = False
