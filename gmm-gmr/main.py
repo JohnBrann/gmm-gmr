@@ -16,6 +16,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mixtures import GMM_GMR
 
+plots_dir = "plots"
+
+if not os.path.exists(plots_dir):
+    os.makedirs(plots_dir)
+
 def save_skill_to_h5(times, trajectory, folder_path="skills"):
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
@@ -61,9 +66,9 @@ def load_demonstrations(folder_path, dataset_key='eef_positions'):
 
 
 # demonstration duration (seconds)
-demo_duration = 5.0
+demo_duration = 10.0
 
-demonstrations = load_demonstrations('../demonstration_collection/smoothed_demonstrations', dataset_key='eef_positions')
+demonstrations = load_demonstrations('../demonstration_collection/smoothed_demonstrations', dataset_key='eef_positions') # TODO: make better
 
 # for i, demo in enumerate(demonstrations):
 #     print("Demonstration {} shape: {}".format(i, demo.shape))
@@ -107,7 +112,7 @@ axarr[0].set_title('GMM-GMR: Demonstrations & Estimated Trajectory (EEF)')
 for ax in axarr:
     ax.legend()
 
-plt.savefig('gmm_gmr_result.png')
+plt.savefig(os.path.join(plots_dir, 'gmm_gmr_result.png'))
 plt.show()
 
 # 3d plots
@@ -115,9 +120,7 @@ fig3d = plt.figure(figsize=(10, 8))
 ax3d = fig3d.add_subplot(111, projection='3d')
 
 for i, demo in enumerate(demonstrations):
-    ax3d.plot(demo[:, 0], demo[:, 1], demo[:, 2],
-              linestyle='--', marker='o', markersize=3,
-              label=f'Demo {i}')
+    ax3d.plot(demo[:, 0], demo[:, 1], demo[:, 2], linestyle='--', marker='o', markersize=3,label=f'Demo {i}')
 
 # plot 3d trajectory
 ax3d.plot(trj[:, 0], trj[:, 1], trj[:, 2],
@@ -129,6 +132,6 @@ ax3d.set_zlabel('Z')
 ax3d.set_title('3D Demonstrations and Estimated Trajectory')
 ax3d.legend()
 
-plt.savefig('gmm_gmr_result_3d.png')
+plt.savefig(os.path.join(plots_dir, 'gmm_gmr_result_3d.png'))
 plt.show()
 

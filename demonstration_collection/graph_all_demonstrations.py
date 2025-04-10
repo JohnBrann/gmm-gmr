@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D 
 
 folder_path = "demonstrations"
+plots_dir = "plots"
+
+if not os.path.exists(plots_dir):
+    os.makedirs(plots_dir)
 
 # Get all files in demonstration folder
 files = [f for f in os.listdir(folder_path) if f.endswith('.h5')]
@@ -37,7 +41,7 @@ ax_3d.set_zlabel('Z')
 ax_3d.set_title('3D End-Effector Trajectories from All Demonstrations')
 ax_3d.legend()
 
-fig_3d.savefig("all_demos_3d.png")
+fig_3d.savefig(os.path.join(plots_dir, "all_demos_3d.png"))
 
 # 2D plots for x, y and z end effector positions, as well as grip strength
 fig_2d, axs = plt.subplots(nrows=4, ncols=1, figsize=(8, 9), sharex=True)
@@ -64,6 +68,6 @@ for idx, file in enumerate(files):
 axs[0].set_title('End-Effector Demonstrations Over Time (X, Y, and Z)')
 axs[0].legend()
 
-fig_2d.savefig("all_demos_2d.png")
+fig_2d.savefig(os.path.join(plots_dir, "all_demos_2d.png"))
 plt.show()
 
