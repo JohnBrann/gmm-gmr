@@ -4,7 +4,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 #  smooth the trajectory using cubic interpolation.
-def smooth_trajectory(data, num_samples=200, kind='cubic'):
+# def smooth_trajectory(data, num_samples=200, kind='cubic'):
 def smooth_trajectory(data, num_samples=50, kind='cubic'):
     n_timesteps, n_features = data.shape if data.ndim > 1 else (data.shape[0], 1)
     # Create a normalized time vector for the raw data.
