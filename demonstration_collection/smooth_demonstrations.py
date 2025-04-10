@@ -5,7 +5,8 @@ from scipy.interpolate import interp1d
 
 #  smooth the trajectory using cubic interpolation.
 def smooth_trajectory(data, num_samples=200, kind='cubic'):
-    n_timesteps, n_features = data.shape
+    print(f"data: {data.shape}, dim: {data.ndim}")
+    n_timesteps, n_features = data.shape if data.ndim > 1 else (data.shape[0], 1)
     # Create a normalized time vector for the raw data.
     original_t = np.linspace(0, 1, n_timesteps)
     # Create a new time vector for the smoothed data.
@@ -13,9 +14,13 @@ def smooth_trajectory(data, num_samples=200, kind='cubic'):
     smoothed = np.zeros((num_samples, n_features))
     
     # Interpolate each feature separately.
-    for i in range(n_features):
-        f_interp = interp1d(original_t, data[:, i], kind=kind, fill_value="extrapolate")
-        smoothed[:, i] = f_interp(resampled_t)
+    if n_features > 1:
+        for i in range(n_features):
+            f_interp = interp1d(original_t, data[:, i], kind=kind, fill_value="extrapolate")
+            smoothed[:, i] = f_interp(resampled_t)
+    else:
+        f_interp = interp1d(original_t, data, kind=kind, fill_value="extrapolate")
+        smoothed = f_interp(resampled_t)
     
     return smoothed
 
@@ -35,10 +40,12 @@ for filename in files:
     # Open the raw demonstration file.
     with h5py.File(raw_file_path, "r") as f:
         raw_timestamps = np.array(f["timestamps"])
-        raw_positions = np.array(f["eef_positions"])  
+        raw_positions = np.array(f["eef_positions"])
+        raw_grip_strength = np.array(f["grip_strength"])
 
     # Apply smoothing
     smoothed_positions = smooth_trajectory(raw_positions, num_samples=num_samples, kind='cubic')
+    smoothed_grip_strength = smooth_trajectory(raw_grip_strength, num_samples=num_samples, kind='cubic')
     # interpolate timestamps to match the new number of samples.
     smoothed_timestamps = np.linspace(raw_timestamps[0], raw_timestamps[-1], num_samples)
     
@@ -47,6 +54,7 @@ for filename in files:
     
     with h5py.File(smoothed_file_path, "w") as f:
         f.create_dataset("timestamps", data=smoothed_timestamps)
+        f.create_dataset("grip_strength", data=smoothed_grip_strength)
         f.create_dataset("eef_positions", data=smoothed_positions)
     
     print(f"Saved smoothed demonstration: {smoothed_file_path}")

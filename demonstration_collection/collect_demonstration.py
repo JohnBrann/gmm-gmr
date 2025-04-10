@@ -36,6 +36,9 @@ running = True
 start_time = time.time()
 last_render_time = start_time
 
+actuator_info = env.sim.data.qfrc_actuator
+gripper_id = env.sim.model.actuator_name2id('gripper0_finger_1')
+grip_strength = []
 eef_positions = [] 
 actions = []
 timestamps = []
@@ -115,6 +118,10 @@ while running:
         actions.append(action)
         eef_positions.append(eef_pos)
         print("Current robot EE:", obs["robot0_eef_pos"])
+        grip = (actuator_info[gripper_id] - 0.55) / 5.45 # should convert observed range 0.55-6.0 to 0.0-1.0
+        clamped = 1.0 if 1.0 < grip else 0.0 if grip < 0.0 else grip
+        grip_strength.append(clamped)
+        print("Current robot grip strength:", clamped)
         # print("Commanded EE:", desired_abs)
         timestamps.append(time.time() - start_time)
 
@@ -157,6 +164,7 @@ with h5py.File(full_path, "w") as f:
     f.attrs["robot"] = "UR5e"
     f.attrs["control_freq"] = env.control_freq
     f.create_dataset("timestamps", data=np.array(timestamps))
+    f.create_dataset("grip_strength", data=np.array(grip_strength))
     f.create_dataset("eef_positions", data=np.array(eef_positions))
     f.create_dataset("actions", data=np.array(actions))
 

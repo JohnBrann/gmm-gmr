@@ -14,13 +14,14 @@ fig_3d = plt.figure()
 ax_3d = fig_3d.add_subplot(111, projection='3d')
 
 
-colors = plt.cm.tab10(np.linspace(0, 1, len(files)))
+#colors = plt.cm.tab10(np.linspace(0, 1, len(files)))
+colors = plt.cm.hsv(np.linspace(0, 1, len(files) + math.ceil(0.8 * len(files))))
 
 for idx, file in enumerate(files):
     file_path = os.path.join(folder_path, file)
     with h5py.File(file_path, "r") as f:
         timestamps = np.array(f["timestamps"])
-        positions = np.array(f["eef_positions"]) 
+        positions = np.array(f["eef_positions"])
     # Plot the 3D trajectory
     ax_3d.plot(
         positions[:, 0],
@@ -38,24 +39,27 @@ ax_3d.legend()
 
 fig_3d.savefig("all_demos_3d.png")
 
-# 2D plots for x, y and z end effector positions
-fig_2d, axs = plt.subplots(nrows=3, ncols=1, figsize=(8, 9), sharex=True)
+# 2D plots for x, y and z end effector positions, as well as grip strength
+fig_2d, axs = plt.subplots(nrows=4, ncols=1, figsize=(8, 9), sharex=True)
 
 axs[0].set_ylabel('X')
 axs[1].set_ylabel('Y')
 axs[2].set_ylabel('Z')
-axs[2].set_xlabel('Time (s)')
+axs[3].set_ylabel('Grip Strength')
+axs[3].set_xlabel('Time (s)')
 
 for idx, file in enumerate(files):
     file_path = os.path.join(folder_path, file)
     with h5py.File(file_path, "r") as f:
         timestamps = np.array(f["timestamps"])
         positions = np.array(f["eef_positions"])
+        grip_strength = np.array(f["grip_strength"])
 
     # plot X, Y, and Z vs. time in corresponding subplots
     axs[0].plot(timestamps, positions[:, 0], color=colors[idx], label=file)
     axs[1].plot(timestamps, positions[:, 1], color=colors[idx], label=file)
     axs[2].plot(timestamps, positions[:, 2], color=colors[idx], label=file)
+    axs[3].plot(timestamps, grip_strength, color=colors[idx], label=file)
 
 axs[0].set_title('End-Effector Demonstrations Over Time (X, Y, and Z)')
 axs[0].legend()
