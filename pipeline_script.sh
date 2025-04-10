@@ -1,5 +1,6 @@
 #!/bin/bash
-BASE_DIR="/home/johnrobot/robot_learning" # modify in future to make module
+#BASE_DIR="/home/johnrobot/robot_learning" # modify in future to make module
+BASE_DIR="."
 DEMO_DIR="$BASE_DIR/demonstration_collection"
 GMM_DIR="$BASE_DIR/gmm-gmr"
 
@@ -18,6 +19,7 @@ echo "Running graph_all_smoothed_demonstrations.py..."
 python graph_all_smoothed_demonstrations.py || { echo "graph_all_smoothed_demonstrations.py failed"; exit 1; }
 
 echo "Switching to GMM-GMR directory..."
+cd ..
 cd "$GMM_DIR" || { echo "Failed to change directory to $GMM_DIR"; exit 1; }
 
 echo "Running main.py..."
