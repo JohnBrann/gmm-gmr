@@ -140,7 +140,7 @@ dependencies:
       - kiwisolver==1.4.7
       - llvmlite==0.41.1
       - matplotlib==3.7.5
-      - mujoco==2.3.7
+      - mujoco==3.2.3
       - mujoco-py==2.1.2.14
       - numba==0.58.1
       - numpy==1.24.4
@@ -153,7 +153,7 @@ dependencies:
       - pyparsing==3.1.4
       - python-dateutil==2.9.0.post0
       - python-xlib==0.33
-      - robosuite==1.4.1
+      - robosuite==1.5.1
       - scipy==1.10.1
       - six==1.17.0
       - termcolor==2.4.0

@@ -1,10 +1,12 @@
 import os
 import re
 import robosuite as suite
+import mujoco
 import pygame
 import h5py
 import numpy as np
 import time
+import math
 
 folder_path = "demonstrations"
 if not os.path.exists(folder_path):
@@ -38,7 +40,7 @@ start_time = time.time()
 last_render_time = start_time
 
 actuator_info = env.sim.data.qfrc_actuator
-gripper_id = env.sim.model.actuator_name2id('gripper0_finger_1')
+gripper_id = env.sim.model.actuator_name2id('gripper0_right_finger_1')
 grip_strength = []
 eef_positions = [] 
 actions = []
@@ -49,7 +51,7 @@ arm_scaling = 0.125
 wrist_scaling = 0.1
 rotation_scaling = 0.1
 trigger_scaling = 0.03
-deadzone = 0.1  
+deadzone = 0.1
 
 def apply_deadzone(value, threshold):
     if abs(value) < threshold:
@@ -66,7 +68,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
             break
-     # Extraneous error handling
+    # Extraneous error handling
     if not running:
         break
 
@@ -76,24 +78,35 @@ while running:
     right_stick_x = apply_deadzone(joystick.get_axis(3), deadzone)
     right_stick_y = apply_deadzone(joystick.get_axis(4), deadzone)
     left_trigger = apply_deadzone(1 + joystick.get_axis(2), deadzone)
-    right_trigger = apply_deadzone(1 + joystick.get_axis(5), deadzone)
-    grip_button_close = joystick.get_button(0)  # A button
-    grip_button_open = joystick.get_button(1)   # B button
+    right_trigger = (joystick.get_axis(5) + 1) / 2
+    button_A = joystick.get_button(0)           # A button
+    button_B = joystick.get_button(1)           # B button
     record_button = joystick.get_button(2)      # X button
     end_button = joystick.get_button(3)         # Y button
+    left_bumper = joystick.get_button(4)        # Left Bumper
+    right_bumper = joystick.get_button(4)       # Right Bumper
 
     # Construct action vector based on your controller inputs
     action = np.zeros(env.action_dim)
-    action[0] = right_stick_y * arm_scaling      # Base rotation
-    action[1] = right_stick_x * arm_scaling      # Shoulder
-    action[2] = -(left_stick_y * wrist_scaling)  # Elbow
-    action[3] = left_stick_x * rotation_scaling  # Wrist
-    action[4] = -(left_trigger * trigger_scaling) + (right_trigger * trigger_scaling)  # Wrist movement
-
-    if grip_button_close:
-        action[-1] = 1.0
-    elif grip_button_open:
-        action[-1] = -1.0
+    # Left joystick controls movement within plane parallel to ground (If robosuite >1.5, otherwise non-composite controller)
+    action[0] = left_stick_y * arm_scaling        # (Non-Composite: Base rotation)
+    action[1] = left_stick_x * arm_scaling        # (Non-Composite: Shoulder)
+    # Right joystick controls elevation and end effector left/right tilt (If robosuite >1.5, otherwise non-composite controller)
+    action[2] = -(right_stick_y * wrist_scaling)  # (Non-Composite: Elbow)
+    action[3] = right_stick_x * rotation_scaling  # (Non-Composite: Wrist)
+    # Left trigger controls end effector forward/backward tilt, left bumper controls tilt direction
+    action[4] = (left_trigger * trigger_scaling) * (1 if left_bumper else -1)  # (Non-Composite: Wrist)
+    # Right trigger controls gripper
+    grip = (actuator_info[gripper_id] - 0.55) / 5.45 # Should convert observed range 0.55-6.0 to 0.0-1.0
+    clamped = 1.0 if 1.0 < grip else 0.0 if grip < 0.0 else grip
+    grip_ctl = right_trigger - clamped
+    if right_trigger > 0.95:
+        action[6] = 1.0
+    elif abs(grip_ctl) >= 0.1: # Prevent erratic movement
+        if grip_ctl < 0:
+            action[6] = math.sin(5 * math.pi * grip_ctl / 9 + math.pi / 18)
+        else:
+            action[6] = math.sin(5 * math.pi * grip_ctl / 9 - math.pi / 18)
 
     # Step the environment with the computed action
     obs, reward, done, info = env.step(action)
@@ -118,8 +131,6 @@ while running:
         actions.append(action)
         eef_positions.append(eef_pos)
         print("Current robot EE:", obs["robot0_eef_pos"])
-        grip = (actuator_info[gripper_id] - 0.55) / 5.45 # Should convert observed range 0.55-6.0 to 0.0-1.0
-        clamped = 1.0 if 1.0 < grip else 0.0 if grip < 0.0 else grip
         grip_strength.append(clamped)
         print("Current robot grip strength:", clamped)
         timestamps.append(time.time() - start_time)
