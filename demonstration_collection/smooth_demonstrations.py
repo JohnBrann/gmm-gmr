@@ -3,7 +3,7 @@ import h5py
 import numpy as np
 from scipy.interpolate import interp1d
 
-#  smooth the trajectory using cubic interpolation.
+# Smooth the trajectory using cubic interpolation.
 # def smooth_trajectory(data, num_samples=200, kind='cubic'):
 def smooth_trajectory(data, num_samples=50, kind='cubic'):
     n_timesteps, n_features = data.shape if data.ndim > 1 else (data.shape[0], 1)
@@ -31,7 +31,7 @@ if not os.path.exists(smoothed_demo_folder):
     os.makedirs(smoothed_demo_folder)
 files = [f for f in os.listdir(raw_demo_folder) if f.endswith('.h5')]
 
-num_samples = 50 #number of samples on curve
+num_samples = 50 # Number of samples on curve
 
 for filename in files:
     raw_file_path = os.path.join(raw_demo_folder, filename)
@@ -45,7 +45,7 @@ for filename in files:
     # Apply smoothing
     smoothed_positions = smooth_trajectory(raw_positions, num_samples=num_samples, kind='cubic')
     smoothed_grip_strength = smooth_trajectory(raw_grip_strength, num_samples=num_samples, kind='cubic')
-    # interpolate timestamps to match the new number of samples.
+    # Interpolate timestamps to match the new number of samples.
     smoothed_timestamps = np.linspace(raw_timestamps[0], raw_timestamps[-1], num_samples)
     
     new_filename = "smoothed_" + filename

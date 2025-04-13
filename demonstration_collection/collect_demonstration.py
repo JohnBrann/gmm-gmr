@@ -10,7 +10,7 @@ folder_path = "demonstrations"
 if not os.path.exists(folder_path):
     os.makedirs(folder_path)
 
-# joystick setup
+# Joystick setup
 pygame.init()
 pygame.joystick.init()
 if pygame.joystick.get_count() == 0:
@@ -18,7 +18,7 @@ if pygame.joystick.get_count() == 0:
 joystick = pygame.joystick.Joystick(0)
 joystick.init()
 
-# env setup
+# Create env
 env = suite.make(
     env_name="Lift",
     robots="UR5e",
@@ -27,7 +27,8 @@ env = suite.make(
     use_camera_obs=False,
     control_freq=20,
     initialization_noise=None,
-    # horizon is length of sim, measured in 1/100 of a second
+    # Horizon is length of sim, we set it absurdly high since we want
+    # the user to end the demo manually using controller input
     horizon=5000000,  
 )
 
@@ -43,7 +44,7 @@ eef_positions = []
 actions = []
 timestamps = []
 
-# sensitivity multipliers (may change with different controllers)
+# Sensitivity multipliers (may change with different controllers)
 arm_scaling = 0.125
 wrist_scaling = 0.1
 rotation_scaling = 0.1
@@ -58,18 +59,18 @@ def apply_deadzone(value, threshold):
 record_button_held = False
 recording = False
 
-# # loop
+# Demonstration loop
 while running:
-    # break condition, event get as well
+    # Break condition, event get as well
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
             break
-     # extraneous error handling
+     # Extraneous error handling
     if not running:
         break
 
-    # read inputs, apply deadzones
+    # Read inputs, apply deadzones
     left_stick_x = apply_deadzone(joystick.get_axis(0), deadzone)
     left_stick_y = apply_deadzone(joystick.get_axis(1), deadzone)
     right_stick_x = apply_deadzone(joystick.get_axis(3), deadzone)
@@ -83,11 +84,11 @@ while running:
 
     # Construct action vector based on your controller inputs
     action = np.zeros(env.action_dim)
-    action[0] = right_stick_y * arm_scaling     # base rotation
-    action[1] = right_stick_x * arm_scaling     # shoulder
-    action[2] = -(left_stick_y * wrist_scaling)  # elbow
-    action[3] = left_stick_x * rotation_scaling  # wrist
-    action[4] = -(left_trigger * trigger_scaling) + (right_trigger * trigger_scaling)  # wrist movement
+    action[0] = right_stick_y * arm_scaling      # Base rotation
+    action[1] = right_stick_x * arm_scaling      # Shoulder
+    action[2] = -(left_stick_y * wrist_scaling)  # Elbow
+    action[3] = left_stick_x * rotation_scaling  # Wrist
+    action[4] = -(left_trigger * trigger_scaling) + (right_trigger * trigger_scaling)  # Wrist movement
 
     if grip_button_close:
         action[-1] = 1.0
@@ -97,7 +98,7 @@ while running:
     # Step the environment with the computed action
     obs, reward, done, info = env.step(action)
     
-    # Retrieve the end-effector position from the observation
+    # Retrieve the end effector position from the observation
     # Adjust the key if needed; typically "robot0_eef_pos" or "eef_pos"
     eef_pos = obs.get("robot0_eef_pos", None)
     if eef_pos is None:
@@ -105,8 +106,7 @@ while running:
     if eef_pos is None:
         raise ValueError("End-effector position not found in observation!")
     
-    # Append the data for this timestep
-    # record
+    # Append the data for this timestep, if recording
     if record_button:
         if not record_button_held:
             record_button_held = True
@@ -118,11 +118,10 @@ while running:
         actions.append(action)
         eef_positions.append(eef_pos)
         print("Current robot EE:", obs["robot0_eef_pos"])
-        grip = (actuator_info[gripper_id] - 0.55) / 5.45 # should convert observed range 0.55-6.0 to 0.0-1.0
+        grip = (actuator_info[gripper_id] - 0.55) / 5.45 # Should convert observed range 0.55-6.0 to 0.0-1.0
         clamped = 1.0 if 1.0 < grip else 0.0 if grip < 0.0 else grip
         grip_strength.append(clamped)
         print("Current robot grip strength:", clamped)
-        # print("Commanded EE:", desired_abs)
         timestamps.append(time.time() - start_time)
 
 

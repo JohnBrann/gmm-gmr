@@ -14,12 +14,11 @@ if not os.path.exists(plots_dir):
 # Get all files in demonstration folder
 files = [f for f in os.listdir(folder_path) if f.endswith('.h5')]
 
-# 3d demonstration plot
+# 3D demonstration plot
 fig_3d = plt.figure()
 ax_3d = fig_3d.add_subplot(111, projection='3d')
 
 
-#colors = plt.cm.tab10(np.linspace(0, 1, len(files)))
 colors = plt.cm.hsv(np.linspace(0, 1, len(files) + math.ceil(0.8 * len(files))))
 
 for idx, file in enumerate(files):
@@ -60,7 +59,7 @@ for idx, file in enumerate(files):
         positions = np.array(f["eef_positions"])
         grip_strength = np.array(f["grip_strength"])
 
-    # plot X, Y, and Z vs. time in corresponding subplots
+    # Plot X, Y, Z, and grip strength vs. time in corresponding subplots
     axs[0].plot(timestamps, positions[:, 0], color=colors[idx], label=file)
     axs[1].plot(timestamps, positions[:, 1], color=colors[idx], label=file)
     axs[2].plot(timestamps, positions[:, 2], color=colors[idx], label=file)

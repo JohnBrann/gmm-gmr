@@ -75,7 +75,7 @@ class GMM_GMR(object):
 
         self.gmr = GMR(self.gmm)
         self.centers = self.gmm.means_
-        self.centers_temporal = self.centers[:, 0]  # these are now in seconds
+        self.centers_temporal = self.centers[:, 0]  # These are now in seconds
         self.centers_spatial_latent = self.centers[:, 1:]
         self.centers_spatial = self.pca.inverse_transform(self.centers_spatial_latent)
 

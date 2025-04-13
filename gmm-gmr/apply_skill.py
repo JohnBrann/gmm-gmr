@@ -42,8 +42,8 @@ def move_to_target(env, target, control_interval=0.1, scaling=1.0, acceptance_th
 def apply_skill_trajectory(skill_file, control_interval=0.1, scaling=1.0, acceptance_threshold=0.02):
     times, trajectory = load_skill_from_h5(skill_file)
     
-    # create env
-    controller_config = suite.load_controller_config(default_controller="OSC_POSE") # controller
+    # Create env
+    controller_config = suite.load_controller_config(default_controller="OSC_POSE") # Controller
     env = suite.make(
         env_name="Lift",
         robots="UR5e",
@@ -58,21 +58,21 @@ def apply_skill_trajectory(skill_file, control_interval=0.1, scaling=1.0, accept
     env.render()
     time.sleep(1.0)
     
-    # move to the starting point of the trajectory.
+    # Move to the starting point of the trajectory
     starting_point = trajectory[0]
     print("Moving to starting position:", starting_point)
     move_to_target(env, starting_point, control_interval, scaling, acceptance_threshold=0.01)
 
     time.sleep(2.0)
     
-    # Iterate through the trajectory points.
+    # Iterate through the trajectory points
     for i, point in enumerate(trajectory):
         print(f"Moving to trajectory point {i}: {point}")
         move_to_target(env, point, control_interval, scaling, acceptance_threshold)
     
-    # stay at last postition of trajectory
+    # Stay at last position of trajectory
     print("Reached final position.")
-    # keep arm in place at end
+    # Keep arm in place at end
     hold_action = np.zeros(env.action_dim) 
     for _ in range(20):
         _, _, _, _ = env.step(hold_action)

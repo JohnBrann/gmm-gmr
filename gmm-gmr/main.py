@@ -39,14 +39,14 @@ def save_skill_to_h5(times, trajectory, folder_path="skills"):
     new_file_name = f"skill_{new_file_num}.h5"
     full_path = os.path.join(folder_path, new_file_name)
     
-    # save data
+    # Save data
     with h5py.File(full_path, "w") as f:
         f.create_dataset("times", data=times)
         f.create_dataset("trajectory", data=trajectory)
     
     print(f"Skill saved to {full_path}")
 
-# Loads demonstrations in h5 format.
+# Loads demonstrations in h5 format
 def load_demonstrations(folder_path, dataset_key='eef_positions'):
     demonstrations = []
     for filename in sorted(os.listdir(folder_path)):
@@ -65,7 +65,7 @@ def load_demonstrations(folder_path, dataset_key='eef_positions'):
     return demonstrations
 
 
-# demonstration duration (seconds)
+# Demonstration duration (seconds)
 demo_duration = 10.0
 
 demonstrations = load_demonstrations('../demonstration_collection/smoothed_demonstrations', dataset_key='eef_positions') # TODO: make better
@@ -80,7 +80,7 @@ gmm_gmr.fit()
 # Set up subplots for a 3-dimensional demonstration (x, y, z)
 fig, axarr = plt.subplots(3, 1, figsize=(8, 12))
 
-# creates a time vector that spans from 0 to demo_duration seconds for each demonstrstion
+# Creates a time vector that spans from 0 to demo_duration seconds for each demonstration
 for i in range(len(gmm_gmr.trajectories)):
     T = gmm_gmr.trajectories[i].shape[0]
     time_vec = np.linspace(0, demo_duration, T)
@@ -95,7 +95,7 @@ for j in range(3):
                      gmm_gmr.centers_spatial[:, j],
                      label='centers')
 
-# generates an estimated trajectory using GMR
+# Generates an estimated trajectory using GMR
 times, trj = gmm_gmr.generate_trajectory(0.1)
 save_skill_to_h5(times, trj)
 
@@ -115,14 +115,14 @@ for ax in axarr:
 plt.savefig(os.path.join(plots_dir, 'gmm_gmr_result.png'))
 plt.show()
 
-# 3d plots
+# 3D plots
 fig3d = plt.figure(figsize=(10, 8))
 ax3d = fig3d.add_subplot(111, projection='3d')
 
 for i, demo in enumerate(demonstrations):
     ax3d.plot(demo[:, 0], demo[:, 1], demo[:, 2], linestyle='--', marker='o', markersize=3,label=f'Demo {i}')
 
-# plot 3d trajectory
+# Plot 3D trajectory
 ax3d.plot(trj[:, 0], trj[:, 1], trj[:, 2],
           linewidth=2, color='red', label='Estimated Trajectory')
 
