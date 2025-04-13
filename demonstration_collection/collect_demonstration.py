@@ -38,6 +38,7 @@ obs = env.reset()
 running = True
 start_time = time.time()
 last_render_time = start_time
+env.visualize(vis_settings = { "robots": False, "grippers": True, "env": False })
 
 actuator_info = env.sim.data.qfrc_actuator
 gripper_id = env.sim.model.actuator_name2id('gripper0_right_finger_1')
