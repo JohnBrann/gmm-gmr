@@ -1,0 +1,6 @@
+(pick red table1)
+(drop-red red bin1)
+(pick blue table1)
+(drop-blue blue bin1)
+(pick green table1)
+(drop-green green bin1)
