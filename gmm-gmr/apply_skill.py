@@ -43,7 +43,10 @@ def apply_skill_trajectory(skill_file, control_interval=0.1, scaling=1.0, accept
     times, trajectory = load_skill_from_h5(skill_file)
     
     # Create env
-    controller_config = suite.load_controller_config(default_controller="OSC_POSE") # Controller
+    controller_config = suite.load_composite_controller_config(robot="UR5e") # Controller
+    # Instruction commented out below may be useful, but further testing is needed
+    # controller_config["body_parts"]["right"]["input_ref_frame"] = "world"
+    print(controller_config)
     env = suite.make(
         env_name="Lift",
         robots="UR5e",
