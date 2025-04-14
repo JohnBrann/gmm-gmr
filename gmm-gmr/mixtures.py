@@ -59,7 +59,7 @@ class GMM_GMR(object):
 
         # Use BIC to select the best number of mixtures
         # components = [5, 10, 15, 20, 25, 30, 35, 40, 45]
-        components = [2,3,4,5] # number of gaussians 
+        components = [2,3,4,5,6] # number of gaussians 
         bics = []
         for c in components:
             gmm = GaussianMixture(n_components=c)
@@ -79,7 +79,7 @@ class GMM_GMR(object):
         self.centers_spatial_latent = self.centers[:, 1:]
         self.centers_spatial = self.pca.inverse_transform(self.centers_spatial_latent)
 
-    def generate_trajectory(self, interval=0.1):
+    def generate_trajectory(self, interval=0.1, num_samples=None):
         """
         Generate a trajectory using GMR.
         
@@ -87,7 +87,11 @@ class GMM_GMR(object):
         :return: A tuple (times, trajectory), where 'times' are in seconds and 'trajectory'
                  is the spatial data reconstructed from the latent space.
         """
-        times = np.arange(min(self.centers_temporal), max(self.centers_temporal) + interval, interval)
+        if num_samples is not None:
+            times = np.linspace(min(self.centers_temporal), max(self.centers_temporal), num_samples)
+        else:
+            times = np.arange(min(self.centers_temporal), max(self.centers_temporal) + interval, interval)
+
         trj = []
         for t in times:
             trj.append(self.gmr.estimate(t))

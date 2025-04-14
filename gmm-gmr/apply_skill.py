@@ -9,12 +9,14 @@ def load_skill_from_h5(file_path):
     with h5py.File(file_path, "r") as f:
         times = np.array(f["times"])
         trajectory = np.array(f["trajectory"])
+        grip_strength = np.array(f["grip_strength"])
         print(f"Loaded skill from: {file_path}")
         print(f"Trajectory shape: {trajectory.shape}")
-    return times, trajectory
+        print(f"Gripper Strength shape: {grip_strength.shape}")
+    return times, trajectory, grip_strength
 
 #  Incrementally moves the robot toward the target using delta commands
-def move_to_target(env, target, control_interval=0.1, scaling=1.0, acceptance_threshold=0.02, max_steps=100):
+def move_to_target(env, target, grip_strength_target, control_interval=0.1, scaling=1.0, acceptance_threshold=0.02, max_steps=100):
     fixed_orientation = np.zeros(3)
     
     action_zero = np.zeros(env.action_dim)
@@ -29,7 +31,15 @@ def move_to_target(env, target, control_interval=0.1, scaling=1.0, acceptance_th
         if err_norm < acceptance_threshold:
             break
         delta = scaling * error
-        action = np.concatenate((delta, fixed_orientation, [0]))
+
+        grip_target_scalar = float(np.squeeze(grip_strength_target))
+        
+        # Now all arrays are 1D: delta and fixed_orientation have shape (3,)
+        # and np.array([grip_target_scalar]) has shape (1,)
+        action = np.concatenate((delta, fixed_orientation, np.array([grip_target_scalar])))
+
+
+        # action = np.concatenate((delta, fixed_orientation, [grip_strength_target]))
         
         obs, _, _, _ = env.step(action)
         current = np.array(obs["robot0_eef_pos"])
@@ -40,7 +50,7 @@ def move_to_target(env, target, control_interval=0.1, scaling=1.0, acceptance_th
         print("Max steps reached without converging to the target.")
 
 def apply_skill_trajectory(skill_file, control_interval=0.1, scaling=1.0, acceptance_threshold=0.02):
-    times, trajectory = load_skill_from_h5(skill_file)
+    times, trajectory, grip_strength = load_skill_from_h5(skill_file)
     
     # Create env
     controller_config = suite.load_composite_controller_config(robot="UR5e") # Controller
@@ -63,15 +73,19 @@ def apply_skill_trajectory(skill_file, control_interval=0.1, scaling=1.0, accept
     
     # Move to the starting point of the trajectory
     starting_point = trajectory[0]
+    starting_grip = -0.00001 # TODO Gripper strength is discrete! I think... find solution to this. clip continuous strength?
+    # starting_grip = grip_strength[0]
     print("Moving to starting position:", starting_point)
-    move_to_target(env, starting_point, control_interval, scaling, acceptance_threshold=0.01)
+    print("Starting Gripper Strength:", starting_grip)
+    move_to_target(env, starting_point, starting_grip, control_interval, scaling, acceptance_threshold=0.01)
 
-    time.sleep(2.0)
+    time.sleep(3.0)
     
     # Iterate through the trajectory points
     for i, point in enumerate(trajectory):
         print(f"Moving to trajectory point {i}: {point}")
-        move_to_target(env, point, control_interval, scaling, acceptance_threshold)
+        print(f"Gripper Strength {i}: {grip_strength[i]}")
+        move_to_target(env, point, grip_strength[i], control_interval, scaling, acceptance_threshold)
     
     # Stay at last position of trajectory
     print("Reached final position.")
@@ -92,4 +106,4 @@ if __name__ == "__main__":
         sys.exit()
 
     skill_file_path = os.path.join(skills_dir, "skill_1.h5")
-    apply_skill_trajectory(skill_file_path, control_interval=0.1, scaling=5.0, acceptance_threshold=0.1)
+    apply_skill_trajectory(skill_file_path, control_interval=0.1, scaling=5.0, acceptance_threshold=0.05)
