@@ -1,12 +1,18 @@
+import sys
+sys.path.append('..')
 import os
 import re
 import robosuite as suite
+from robosuite.models.objects import BoxObject
+from robosuite.utils.placement_samplers import UniformRandomSampler
+from environments import pick_place_custom
 import mujoco
 import pygame
 import h5py
 import numpy as np
 import time
 import math
+from enum import IntEnum
 
 folder_path = "demonstrations"
 if not os.path.exists(folder_path):
@@ -20,9 +26,32 @@ if pygame.joystick.get_count() == 0:
 joystick = pygame.joystick.Joystick(0)
 joystick.init()
 
+class Button(IntEnum):
+    A = 0,
+    B = 1,
+    X = 2,
+    Y = 3
+
+# Create cubes
+box_r = BoxObject(
+    name="red-box",
+    size=[0.02, 0.02, 0.02],
+    rgba=[1, 0, 0, 1]
+)
+box_g = BoxObject(
+    name="green-box",
+    size=[0.02, 0.02, 0.02],
+    rgba=[0, 1, 0, 1]
+)
+box_b = BoxObject(
+    name="blue-box",
+    size=[0.02, 0.02, 0.02],
+    rgba=[0, 0, 1, 1]
+)
+
 # Create env
 env = suite.make(
-    env_name="Lift",
+    env_name="PickPlaceCustom",
     robots="UR5e",
     has_renderer=True,
     has_offscreen_renderer=False,
@@ -31,7 +60,8 @@ env = suite.make(
     initialization_noise=None,
     # Horizon is length of sim, we set it absurdly high since we want
     # the user to end the demo manually using controller input
-    horizon=5000000,  
+    horizon=5000000,
+    blocks=[box_r, box_g, box_b]
 )
 
 obs = env.reset()
@@ -59,7 +89,7 @@ def apply_deadzone(value, threshold):
         return 0.0
     return value * (abs(value) - threshold) / (1 - threshold)  # llm generated smoothing
 
-record_button_held = False
+button_held = [False] * 4
 recording = False
 
 # Demonstration loop
@@ -122,12 +152,12 @@ while running:
     
     # Append the data for this timestep, if recording
     if record_button:
-        if not record_button_held:
-            record_button_held = True
+        if not button_held[Button.X]:
+            button_held[Button.X] = True
             recording = not recording
             print(f"Recording {'started' if recording else 'ended'}")
-    elif record_button_held:
-        record_button_held = False
+    elif button_held[Button.X]:
+        button_held[Button.X] = False
     if recording:
         actions.append(action)
         eef_positions.append(eef_pos)
@@ -135,8 +165,7 @@ while running:
         grip_strength.append(clamped)
         print("Current robot grip strength:", clamped)
         timestamps.append(time.time() - start_time)
-
-
+        
     # Render at the control frequency
     current_time = time.time()
     if current_time - last_render_time >= 1/20:
