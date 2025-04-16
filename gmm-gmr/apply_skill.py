@@ -1,7 +1,11 @@
+import sys
+sys.path.append('..')
 import time
 import h5py
 import numpy as np
 import robosuite as suite
+from robosuite.models.objects import BoxObject
+from environments import pick_place_custom
 import os
 import sys
 
@@ -52,19 +56,37 @@ def move_to_target(env, target, grip_strength_target, control_interval=0.1, scal
 def apply_skill_trajectory(skill_file, control_interval=0.1, scaling=1.0, acceptance_threshold=0.02):
     times, trajectory, grip_strength = load_skill_from_h5(skill_file)
     
+    # Create cubes
+    box_r = BoxObject(
+        name="red-box",
+        size=[0.02, 0.02, 0.02],
+        rgba=[1, 0, 0, 1]
+    )
+    box_g = BoxObject(
+        name="green-box",
+        size=[0.02, 0.02, 0.02],
+        rgba=[0, 1, 0, 1]
+    )
+    box_b = BoxObject(
+        name="blue-box",
+        size=[0.02, 0.02, 0.02],
+        rgba=[0, 0, 1, 1]
+    )
+    
     # Create env
     controller_config = suite.load_composite_controller_config(robot="UR5e") # Controller
     # Instruction commented out below may be useful, but further testing is needed
     # controller_config["body_parts"]["right"]["input_ref_frame"] = "world"
     print(controller_config)
     env = suite.make(
-        env_name="Lift",
+        env_name="PickPlaceCustom",
         robots="UR5e",
         has_renderer=True,
         has_offscreen_renderer=False,
         use_camera_obs=False,
         control_freq=20,
-        controller_configs=controller_config
+        controller_configs=controller_config,
+        blocks=[box_r, box_g, box_b]
     )
     
     obs = env.reset()

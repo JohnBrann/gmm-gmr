@@ -1,7 +1,11 @@
+import sys
+sys.path.append('..')
 import time
 import h5py
 import numpy as np
 import robosuite as suite
+from robosuite.models.objects import BoxObject
+from environments import pick_place_custom
 import os
 import sys
 
@@ -80,17 +84,35 @@ def apply_skill_trajectory(skill_file, control_interval=0.1, scaling=1.0, accept
     # Load the learned skill
     times, trajectory, grip_strength = load_skill_from_h5(skill_file)
     
+    # Create cubes
+    box_r = BoxObject(
+        name="red-box",
+        size=[0.02, 0.02, 0.02],
+        rgba=[1, 0, 0, 1]
+    )
+    box_g = BoxObject(
+        name="green-box",
+        size=[0.02, 0.02, 0.02],
+        rgba=[0, 1, 0, 1]
+    )
+    box_b = BoxObject(
+        name="blue-box",
+        size=[0.02, 0.02, 0.02],
+        rgba=[0, 0, 1, 1]
+    )
+    
     # Create environment using robosuite
     controller_config = suite.load_composite_controller_config(robot="UR5e")
     print("Controller configuration:", controller_config)
     env = suite.make(
-        env_name="Lift",
+        env_name="PickPlaceCustom",
         robots="UR5e",
         has_renderer=True,
         has_offscreen_renderer=False,
         use_camera_obs=False,
         control_freq=20,
-        controller_configs=controller_config
+        controller_configs=controller_config,
+        blocks=[box_r, box_g, box_b]
     )
     
     # Reset environment and render
