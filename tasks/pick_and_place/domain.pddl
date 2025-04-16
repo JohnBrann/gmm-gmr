@@ -25,36 +25,12 @@
                  (not (on-table ?b ?t)))
   )
 
-  ;; DROP-RED: drops the red block into the bin.
-  ;; only possible when holding a red block
-  (:action drop-red
-    :parameters (?r - block ?x - bin)
-    :precondition (and (holding ?r)
-                       (red ?r))
-    :effect (and (in-bin ?r ?x)
-                 (arm-free)
-                 (not (holding ?r)))
-  )
 
-  ;; DROP-BLUE: drops the blue block into the bin.
-  ;; only possible when holding a blue block and red is already in the bin
-  (:action drop-blue
-    :parameters (?b - block ?x - bin)
-    :precondition (and (holding ?b)
-                       (blue ?b)
-                       (in-bin red ?x))
-    :effect (and (in-bin ?b ?x)
-                 (arm-free)
-                 (not (holding ?b)))
-  )
 
-  ;; DROP-GREEN: drops the green block into the bin.
-  ;; only possible when holding a green block and blue is already in the bin
-  (:action drop-green
+  ;; PLACE: places a block into the bin on the table
+  (:action place
     :parameters (?b - block ?x - bin)
-    :precondition (and (holding ?b)
-                       (green ?b)
-                       (in-bin blue ?x))
+    :precondition (and (holding ?b))
     :effect (and (in-bin ?b ?x)
                  (arm-free)
                  (not (holding ?b)))
