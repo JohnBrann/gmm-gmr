@@ -170,6 +170,23 @@ while running:
     if current_time - last_render_time >= 1/20:
         env.render()
         last_render_time = current_time
+    
+    if button_B:
+        if not button_held[Button.B]:
+            button_held[Button.B] = True
+            if recording:
+                recording = False
+                print(f"Recording scrapped, resetting...")
+                actions.clear()
+                eef_positions.clear()
+                grip_strength.clear()
+                timestamps.clear()
+                start_time = time.time()
+                env.reset()
+                actuator_info = env.sim.data.qfrc_actuator
+                gripper_id = env.sim.model.actuator_name2id('gripper0_right_finger_1')
+    elif button_held[Button.B]:
+        button_held[Button.B] = False
 
     if end_button:
         done = True
