@@ -184,6 +184,7 @@ while running:
                 timestamps.clear()
                 start_time = time.time()
                 env.reset()
+                env.visualize(vis_settings = { "robots": False, "grippers": True, "env": False })
                 actuator_info = env.sim.data.qfrc_actuator
                 gripper_id = env.sim.model.actuator_name2id('gripper0_right_finger_1')
     elif button_held[Button.B]:
