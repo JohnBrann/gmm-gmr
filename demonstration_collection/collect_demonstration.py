@@ -60,6 +60,7 @@ env = suite.make(
     # Horizon is length of sim, we set it absurdly high since we want
     # the user to end the demo manually using controller input
     horizon=5000000,
+    use_initializer=True,
     blocks=[box_r, box_g, box_b]
 )
 

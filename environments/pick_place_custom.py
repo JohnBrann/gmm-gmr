@@ -40,6 +40,7 @@ class PickPlaceCustom(ManipulationEnv):
         renderer_config=None,
         seed=None,
         # Custom Stuff
+        use_initializer=True,
         obj_initializer=None,
         blocks=None
     ):
@@ -53,25 +54,27 @@ class PickPlaceCustom(ManipulationEnv):
         else:
             self.blocks = blocks
         # Set up default object initializer if necessary
-        if obj_initializer is None:
-            # Add blocks to sampler
-            self.obj_initializer = UniformRandomSampler(
-                name="CubeSampler",
-                mujoco_objects=self.blocks,
-                x_range=[-0.08, 0.08],
-                y_range=[-0.08, 0.08],
-                rotation_axis='z',
-                rotation=None,
-                ensure_object_boundary_in_range=False,
-                ensure_valid_placement=True,
-                reference_pos=[0, 0, 0.8],
-                z_offset=0.01
-            )
-        else:
-            # Load configured initializer
-            self.obj_initializer = obj_initializer
-            # Add blocks to initializer
-            self.obj_initializer.mujoco_objects.add_objects(self.blocks)
+        self.use_initializer = use_initializer
+        if self.use_initializer:
+            if obj_initializer is None:
+                # Add blocks to sampler
+                self.obj_initializer = UniformRandomSampler(
+                    name="CubeSampler",
+                    mujoco_objects=self.blocks,
+                    x_range=[-0.08, 0.08],
+                    y_range=[-0.08, 0.08],
+                    rotation_axis='z',
+                    rotation=None,
+                    ensure_object_boundary_in_range=False,
+                    ensure_valid_placement=True,
+                    reference_pos=[0, 0, 0.8],
+                    z_offset=0.01
+                )
+            else:
+                # Load configured initializer
+                self.obj_initializer = obj_initializer
+                # Add blocks to initializer
+                self.obj_initializer.mujoco_objects.add_objects(self.blocks)
         super().__init__(
             robots=robots,
             env_configuration=env_configuration,
@@ -119,6 +122,10 @@ class PickPlaceCustom(ManipulationEnv):
         super()._reset_internal()
         
         if not self.deterministic_reset:
-            placements = self.obj_initializer.sample()
-            for pos, quat, block in placements.values():
-                self.sim.data.set_joint_qpos(block.joints[0], np.concatenate([np.array(pos), np.array(quat)]))
+            if self.use_initializer:
+                placements = self.obj_initializer.sample()
+                for pos, quat, block in placements.values():
+                    self.sim.data.set_joint_qpos(block.joints[0], np.concatenate([np.array(pos), np.array(quat)]))
+            else:
+                for i in range(len(self.blocks)):
+                    self.sim.data.set_joint_qpos(self.blocks[i]._name + "_" + self.blocks[i]._joints[0], np.array([0.0, 0.02 * i - 0.01 * (len(self.blocks) - 1), 0.81, 0.0, 0.0, 0.0, 1.0]))

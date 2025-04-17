@@ -86,6 +86,7 @@ def apply_skill_trajectory(skill_file, control_interval=0.1, scaling=1.0, accept
         use_camera_obs=False,
         control_freq=20,
         controller_configs=controller_config,
+        use_initializer=True,
         blocks=[box_r, box_g, box_b]
     )
     

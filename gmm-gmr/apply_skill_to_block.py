@@ -39,6 +39,7 @@ env = suite.make(
     use_camera_obs=False,
     control_freq=20,
     controller_configs=controller_config,
+    use_initializer=True,
     blocks=[box_r, box_g, box_b]
 )
 obs = env.reset()
