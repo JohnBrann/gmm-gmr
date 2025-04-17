@@ -154,6 +154,7 @@ while running:
         if not button_held[Button.X]:
             button_held[Button.X] = True
             recording = not recording
+            start_time = time.time()
             print(f"Recording {'started' if recording else 'ended'}")
     elif button_held[Button.X]:
         button_held[Button.X] = False
