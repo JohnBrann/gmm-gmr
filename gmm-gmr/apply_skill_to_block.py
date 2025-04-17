@@ -117,6 +117,8 @@ def set_block_position(env, block_name, new_position):
 def apply_skill_trajectory(skill_file, block_name, control_interval=0.1, scaling=1.0, acceptance_threshold=0.02):
     # Load the learned skill
     times, trajectory, grip_strength = load_skill_from_h5(skill_file)
+
+    print(f"\n\nPICKING {block_name}\n\n")
     
     block_position = get_block_position(env, block_name)
     
@@ -154,19 +156,30 @@ if __name__ == "__main__":
 
     skill_file_path = os.path.join(skills_dir, "skill_1.h5")
 
-    # pick one of: "red-box", "green-box", "blue-box"
-    target_color = "green-box"
-    # wherever you want to drop it
-    drop_pos = np.array([0.1, -0.1, 0.85])
-    apply_skill_trajectory(skill_file_path, target_color, control_interval=0.1, scaling=5.0, acceptance_threshold=0.04)
 
-    target_color = "red-box"
-    # wherever you want to drop it
-    drop_pos = np.array([0.1, -0.1, 0.85])
-    apply_skill_trajectory(skill_file_path, target_color, control_interval=0.1, scaling=5.0, acceptance_threshold=0.04)
+    # Usingp planner for picking block TODO: make this better pathing wise and in general all the code
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(base_dir)
+    solution_file = os.path.join(project_root, "tasks", "pick_and_place", "task01.pddl.soln")
+    if not os.path.isfile(solution_file):
+        print(f"Solution file not found: {solution_file}")
+        sys.exit()
 
-    target_color = "blue-box"
-    # wherever you want to drop it
-    drop_pos = np.array([0.1, -0.1, 0.85])
-    apply_skill_trajectory(skill_file_path, target_color, control_interval=0.1, scaling=5.0, acceptance_threshold=0.04)
+    # read the solution commands
+    with open(solution_file, "r") as f:
+        commands = [line.strip() for line in f if line.strip()]
+
+    for cmd in commands:
+        parts = cmd.strip("()").split()
+        if len(parts) != 3 or parts[0] != "pick":
+            print(f"Ignoring invalid command: {cmd}")
+            continue
+
+        color_key = parts[1]
+        block_name = f"{color_key}-box"
+
+        # perform the pick‑and‑place skill
+        apply_skill_trajectory(skill_file_path, block_name, control_interval=0.1, scaling=5.0, acceptance_threshold=0.04)
+
+    env.close()
 
