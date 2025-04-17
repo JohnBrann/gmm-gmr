@@ -6,8 +6,45 @@ import numpy as np
 import robosuite as suite
 from robosuite.models.objects import BoxObject
 from environments import pick_place_custom
+from environments.pick_place_custom import PickPlaceCustom
 import os
 import sys
+
+# Create environment once
+
+ # Create cubes
+box_r = BoxObject(
+    name="red-box",
+    size=[0.02, 0.02, 0.02],
+    rgba=[1, 0, 0, 1]
+)
+box_g = BoxObject(
+    name="green-box",
+    size=[0.02, 0.02, 0.02],
+    rgba=[0, 1, 0, 1]
+)
+box_b = BoxObject(
+    name="blue-box",
+    size=[0.02, 0.02, 0.02],
+    rgba=[0, 0, 1, 1]
+)
+
+
+controller_config = suite.load_composite_controller_config(robot="UR5e")
+env = suite.make(
+    env_name="PickPlaceCustom",
+    robots="UR5e",
+    has_renderer=True,
+    has_offscreen_renderer=False,
+    use_camera_obs=False,
+    control_freq=20,
+    controller_configs=controller_config,
+    blocks=[box_r, box_g, box_b]
+)
+obs = env.reset()
+env.render()
+time.sleep(1.0)
+
 
 def load_skill_from_h5(file_path):
     with h5py.File(file_path, "r") as f:
@@ -57,88 +94,31 @@ def move_to_target(env, target, grip_strength_target, control_interval=0.1, scal
         print("Max steps reached without converging to the target.")
 
 # Gets the block position 
-def get_block_position(obs):
-    # TODO: get posiiton of specified block (red, blue, ect.)
-    block_position = np.array(obs["cube_pos"]) 
-    
-    return block_position
+def get_block_position(env, block_name):
+    candidates = [b for b in env.sim.model.body_names if b.startswith(block_name + "_")]
+    if len(candidates) != 1:
+        raise ValueError(f"Expected exactly one body for {block_name}, got {candidates!r}")
+    body_id = env.sim.model.body_name2id(candidates[0])
+    return env.sim.data.body_xpos[body_id].copy()
 
 # Set the block position TODO: make this for every block that spawns in (semi random configuration of 3 blocks)
-def set_block_position(env, new_position):
-    try:
-        body_id = env.sim.model.body_name2id("cube_main")
-    except Exception as e:
-        print("Error accessing the cube body. Please verify the body name in your model:", e)
-        return
-
-    # Get the qpos index corresponding to the body
-    qpos_index = env.sim.model.body_jntadr[body_id]
-    current_qpos = env.sim.data.qpos.copy()
-    # Set the position (assumed to be the first three values)
-    current_qpos[qpos_index:qpos_index+3] = new_position
-    env.sim.data.qpos[:] = current_qpos
+def set_block_position(env, block_name, new_position):
+    candidates = [b for b in env.sim.model.body_names if b.startswith(block_name + "_")]
+    if len(candidates) != 1:
+        raise ValueError(f"Expected exactly one body for {block_name}, got {candidates!r}")
+    body_id  = env.sim.model.body_name2id(candidates[0])
+    jnt_addr = env.sim.model.body_jntadr[body_id]
+    qpos = env.sim.data.qpos.copy()
+    qpos[jnt_addr:jnt_addr+3] = new_position
+    env.sim.data.qpos[:] = qpos
     env.sim.forward()
-    print("Block position manually set to:", new_position)
+    print(f"Manually set {block_name} to {new_position}")
 
-def apply_skill_trajectory(skill_file, control_interval=0.1, scaling=1.0, acceptance_threshold=0.02):
+def apply_skill_trajectory(skill_file, block_name, control_interval=0.1, scaling=1.0, acceptance_threshold=0.02):
     # Load the learned skill
     times, trajectory, grip_strength = load_skill_from_h5(skill_file)
     
-    # Create cubes
-    box_r = BoxObject(
-        name="red-box",
-        size=[0.02, 0.02, 0.02],
-        rgba=[1, 0, 0, 1]
-    )
-    box_g = BoxObject(
-        name="green-box",
-        size=[0.02, 0.02, 0.02],
-        rgba=[0, 1, 0, 1]
-    )
-    box_b = BoxObject(
-        name="blue-box",
-        size=[0.02, 0.02, 0.02],
-        rgba=[0, 0, 1, 1]
-    )
-    
-    # Create environment using robosuite
-    controller_config = suite.load_composite_controller_config(robot="UR5e")
-    print("Controller configuration:", controller_config)
-    env = suite.make(
-        env_name="PickPlaceCustom",
-        robots="UR5e",
-        has_renderer=True,
-        has_offscreen_renderer=False,
-        use_camera_obs=False,
-        control_freq=20,
-        controller_configs=controller_config,
-        blocks=[box_r, box_g, box_b]
-    )
-    
-    # Reset environment and render
-    obs = env.reset()
-    env.render()
-    time.sleep(1.0)
-    
-    try:
-        block_position = get_block_position(obs)
-    except KeyError as e:
-        print("Error retrieving block position:", e)
-        env.close()
-        sys.exit(1)
-    
-    print("Block position before manual update:", block_position)
-    
-    # Manually set the block position to the desired coordinates
-    desired_block_position = [0.01686829, -0.12840486, 0.83049447]  # Change these values as needed
-    set_block_position(env, desired_block_position)
-    
-    # Take an extra step to update the observation after state modification.
-    obs, _, _, _ = env.step(np.zeros(env.action_dim))
-    block_position = get_block_position(obs)
-    print("Block position after manual update:", block_position)
-    env.render()
-    time.sleep(1.0)
+    block_position = get_block_position(env, block_name)
     
     # Adjust the skill trajectory based on the updated block position.
     adjusted_trajectory = adjust_trajectory(trajectory, block_position)
@@ -165,9 +145,6 @@ def apply_skill_trajectory(skill_file, control_interval=0.1, scaling=1.0, accept
         _, _, _, _ = env.step(hold_action)
         env.render()
         time.sleep(control_interval)
-    
-    time.sleep(2)
-    env.close()
 
 if __name__ == "__main__":
     skills_dir = "skills"
@@ -176,4 +153,20 @@ if __name__ == "__main__":
         sys.exit()
 
     skill_file_path = os.path.join(skills_dir, "skill_1.h5")
-    apply_skill_trajectory(skill_file_path, control_interval=0.1, scaling=5.0, acceptance_threshold=0.04)
+
+    # pick one of: "red-box", "green-box", "blue-box"
+    target_color = "green-box"
+    # wherever you want to drop it
+    drop_pos = np.array([0.1, -0.1, 0.85])
+    apply_skill_trajectory(skill_file_path, target_color, control_interval=0.1, scaling=5.0, acceptance_threshold=0.04)
+
+    target_color = "red-box"
+    # wherever you want to drop it
+    drop_pos = np.array([0.1, -0.1, 0.85])
+    apply_skill_trajectory(skill_file_path, target_color, control_interval=0.1, scaling=5.0, acceptance_threshold=0.04)
+
+    target_color = "blue-box"
+    # wherever you want to drop it
+    drop_pos = np.array([0.1, -0.1, 0.85])
+    apply_skill_trajectory(skill_file_path, target_color, control_interval=0.1, scaling=5.0, acceptance_threshold=0.04)
+
