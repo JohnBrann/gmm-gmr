@@ -39,7 +39,7 @@ env = suite.make(
     use_camera_obs=False,
     control_freq=20,
     controller_configs=controller_config,
-    use_initializer=True,
+    use_initializer=False,
     blocks=[box_r, box_g, box_b]
 )
 obs = env.reset()
@@ -63,7 +63,7 @@ def adjust_trajectory(trajectory, block_position):
     This simply computes the difference between the block_position and the last trajectory
     point and adds that offset to the entire trajectory.
     """
-    original_final_point = trajectory[-1]
+    original_final_point = trajectory[-5]
     offset = block_position - original_final_point
     print("Original final trajectory point:", original_final_point)
     print("Observed block position:", block_position)
@@ -161,7 +161,7 @@ if __name__ == "__main__":
     # Usingp planner for picking block TODO: make this better pathing wise and in general all the code
     base_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(base_dir)
-    solution_file = os.path.join(project_root, "tasks", "pick_and_place", "task01.pddl.soln")
+    solution_file = os.path.join(project_root, "tasks", "push", "task01.pddl.soln")
     if not os.path.isfile(solution_file):
         print(f"Solution file not found: {solution_file}")
         sys.exit()
@@ -170,9 +170,12 @@ if __name__ == "__main__":
     with open(solution_file, "r") as f:
         commands = [line.strip() for line in f if line.strip()]
 
+    # TODO: Make this so it also recognizes commands for place skill
+    # we will have to make it so it does not reset the gripper to starting posiiton unless the next task is pick
+    # gripper still does not work, make cotntinuous trajectory discrete, 
     for cmd in commands:
         parts = cmd.strip("()").split()
-        if len(parts) != 3 or parts[0] != "pick":
+        if len(parts) != 3 or parts[0] != "push":
             print(f"Ignoring invalid command: {cmd}")
             continue
 

@@ -74,8 +74,8 @@ def load_demonstrations(folder_path, dataset_key='eef_positions'):
 # Demonstration duration (seconds)
 demo_duration = 15.0
 
-demonstrations = load_demonstrations('./smoothed_demonstrations', dataset_key='eef_positions') # TODO: make better
-gripper_demos = load_demonstrations('./smoothed_demonstrations', dataset_key='grip_strength')
+demonstrations = load_demonstrations('../demonstration_collection/smoothed_demonstrations', dataset_key='eef_positions') # TODO: make better
+gripper_demos = load_demonstrations('../demonstration_collection/smoothed_demonstrations', dataset_key='grip_strength')
 # for i, demo in enumerate(demonstrations):
 #     print("Demonstration {} shape: {}".format(i, demo.shape))
 

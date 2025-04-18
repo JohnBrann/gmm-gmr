@@ -48,8 +48,12 @@ class PickPlaceCustom(ManipulationEnv):
         if blocks is None:
             self.blocks = BoxObject(
                 name="red-box",
-                size=[0.02, 0.02, 0.02],
-                rgba=[1, 0, 0, 1]
+                size=[0.02, 0.02, 0.1],
+                rgba=[1, 0, 0, 1],
+                density=0,
+                friction=(0.001, 0.001, 0.001),             # very slippery
+                solimp=(0.9, 0.99, 0.001),           # soft contacts
+                solref=(0.02, 1.0)      
             )
         else:
             self.blocks = blocks
@@ -68,7 +72,7 @@ class PickPlaceCustom(ManipulationEnv):
                     ensure_object_boundary_in_range=False,
                     ensure_valid_placement=True,
                     reference_pos=[0, 0, 0.8],
-                    z_offset=0.01
+                    z_offset=0.1
                 )
             else:
                 # Load configured initializer
