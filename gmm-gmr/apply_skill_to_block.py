@@ -144,7 +144,7 @@ def apply_skill_trajectory(skill, target, control_interval=0.1, scaling=1.0, acc
     
     # Move to the starting point of the adjusted trajectory
     starting_point = adjusted_trajectory[0]
-    grip = 1.0 if skill.grip_initial() else 0.0  # Adjust as needed for your gripper configuration
+    grip = 1.0 if skill.grip_initial() else -1.0  # Adjust as needed for your gripper configuration
     print("Moving to starting position:", starting_point)
     print("Starting Gripper Strength:", grip)
     move_to_target(env, starting_point, grip, control_interval, scaling, acceptance_threshold=0.01)
