@@ -40,14 +40,14 @@ class Controls:
     def __str__(this):
         yes = "\033[92mYES\033[0m"
         no = "\033[91mNO\033[0m"
-        return ("-============== Controller State ==============-"
-        f"\n  Translation:  ({this.translate[0]:.5f}, {this.translate[1]:.5f}, {this.translate[2]:.5f})"
-        f"\n  Wrist:        ({this.wrist[0]:.5f}, {this.wrist[1]:.5f})"
-        f"\n  Gripper:      ({this.gripper:.5f})"
-        f"\n  Toggle Demo:  {yes if this.demo_toggle else no}"
-        f"\n  Finish Demo:  {yes if this.demo_finish else no}"
-        f"\n  Scrap Demo:   {yes if this.demo_scrap else no}"
-        "\n-==============================================-")
+        return (" ─────────────── Controller State ───────────────"
+        f"\n   Translation:  ({this.translate[0]:.5f}, {this.translate[1]:.5f}, {this.translate[2]:.5f})"
+        f"\n   Wrist:        ({this.wrist[0]:.5f}, {this.wrist[1]:.5f})"
+        f"\n   Gripper:      ({this.gripper:.5f})"
+        f"\n   Toggle Demo:  {yes if this.demo_toggle else no}"
+        f"\n   Finish Demo:  {yes if this.demo_finish else no}"
+        f"\n   Scrap Demo:   {yes if this.demo_scrap else no}"
+        "\n ────────────────────────────────────────────────")
 
 # Enum for tracking held buttons/keys
 # (Also used to match controller button to functionality)
