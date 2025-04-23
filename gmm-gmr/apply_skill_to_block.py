@@ -158,7 +158,7 @@ if __name__ == "__main__":
     skill_file_path = os.path.join(skills_dir, "skill_1.h5")
 
 
-    # Usingp planner for picking block TODO: make this better pathing wise and in general all the code
+    # Using planner for picking block TODO: make this better pathing wise and in general all the code
     base_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(base_dir)
     solution_file = os.path.join(project_root, "tasks", "push", "task01.pddl.soln")
@@ -171,8 +171,8 @@ if __name__ == "__main__":
         commands = [line.strip() for line in f if line.strip()]
 
     # TODO: Make this so it also recognizes commands for place skill
-    # we will have to make it so it does not reset the gripper to starting posiiton unless the next task is pick
-    # gripper still does not work, make cotntinuous trajectory discrete, 
+    # we will have to make it so it does not reset the gripper to starting position unless the next task is pick
+    # gripper still does not work, make continuous trajectory discrete,
     for cmd in commands:
         parts = cmd.strip("()").split()
         if len(parts) != 3 or parts[0] != "push":
