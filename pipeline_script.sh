@@ -29,6 +29,6 @@ echo "Running main.py..."
 python main.py || { echo "main.py failed"; exit 1; }
 
 echo "Running apply_skill.py..."
-python apply_skill.py || { echo "apply_skill.py failed"; exit 1; }
+python apply_skill_to_block.py || { echo "apply_skill.py failed"; exit 1; }
 
 echo "Pipeline execution complete."

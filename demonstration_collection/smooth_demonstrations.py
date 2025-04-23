@@ -35,16 +35,19 @@ num_samples = 50 # Number of samples on curve
 
 for filename in files:
     raw_file_path = os.path.join(raw_demo_folder, filename)
+    attrs = {}
     
     # Open the raw demonstration file.
     with h5py.File(raw_file_path, "r") as f:
+        if "skill_name" not in f.attrs.keys():
+            print(f"Skipping demos from {raw_file_path} due to missing attributes!")
+            continue
+        attrs.update(f.attrs)
         raw_timestamps = np.array(f["timestamps"])
         raw_positions = np.array(f["eef_positions"])
-        raw_grip_strength = np.array(f["grip_strength"])
 
     # Apply smoothing
     smoothed_positions = smooth_trajectory(raw_positions, num_samples=num_samples, kind='cubic')
-    smoothed_grip_strength = smooth_trajectory(raw_grip_strength, num_samples=num_samples, kind='cubic')
     # Interpolate timestamps to match the new number of samples.
     smoothed_timestamps = np.linspace(raw_timestamps[0], raw_timestamps[-1], num_samples)
     
@@ -52,8 +55,8 @@ for filename in files:
     smoothed_file_path = os.path.join(smoothed_demo_folder, new_filename)
     
     with h5py.File(smoothed_file_path, "w") as f:
+        f.attrs.update(attrs)
         f.create_dataset("timestamps", data=smoothed_timestamps)
-        f.create_dataset("grip_strength", data=smoothed_grip_strength)
         f.create_dataset("eef_positions", data=smoothed_positions)
     
     print(f"Saved smoothed demonstration: {smoothed_file_path}")

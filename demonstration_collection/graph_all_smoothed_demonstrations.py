@@ -44,27 +44,24 @@ ax_3d.legend()
 
 fig_3d.savefig(os.path.join(plots_dir, "all_smoothed_demos_3d.png"))
 
-# 2D plots for x, y and z end effector positions, as well as grip strength
-fig_2d, axs = plt.subplots(nrows=4, ncols=1, figsize=(8, 9), sharex=True)
+# 2D plots for x, y and z end effector positions
+fig_2d, axs = plt.subplots(nrows=3, ncols=1, figsize=(8, 9), sharex=True)
 
 axs[0].set_ylabel('X')
 axs[1].set_ylabel('Y')
 axs[2].set_ylabel('Z')
-axs[3].set_ylabel('Grip Strength')
-axs[3].set_xlabel('Time (s)')
+axs[2].set_xlabel('Time (s)')
 
 for idx, file in enumerate(files):
     file_path = os.path.join(folder_path, file)
     with h5py.File(file_path, "r") as f:
         timestamps = np.array(f["timestamps"])
         positions = np.array(f["eef_positions"])
-        grip_strength = np.array(f["grip_strength"])
 
-    # Plot X, Y, Z, and grip strength vs. time in corresponding subplots
+    # Plot X, Y, Z vs. time in corresponding subplots
     axs[0].plot(timestamps, positions[:, 0], color=colors[idx], label=file)
     axs[1].plot(timestamps, positions[:, 1], color=colors[idx], label=file)
     axs[2].plot(timestamps, positions[:, 2], color=colors[idx], label=file)
-    axs[3].plot(timestamps, grip_strength, color=colors[idx], label=file)
 
 axs[0].set_title('Smoothed End-Effector Demonstrations Over Time (X, Y, Z)')
 axs[0].legend()

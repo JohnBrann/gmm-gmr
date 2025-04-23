@@ -83,6 +83,12 @@ def above_inplace(output):
     height = print_inplace.inplace_line_count
     print(f"\033[{height}F{output}", end=f"\033[0K\033[{height}E\n{margin}", flush=True)
 
+# Prompt user for skill information
+print("\n ────────────────── Skill Info ──────────────────\n ────────────────────────────────────────────────\033[1F")
+skill_name_in = input(f"\033[2K   PDDL Action: \n ────────────────────────────────────────────────\033[1F\033[16C")
+skill_target_idx_in = input(f"\033[2K   PDDL Target Index: \n ────────────────────────────────────────────────\033[1F\033[22C")
+print("\033[1E\n")
+
 # Create cubes
 box_r = BoxObject(
     name="red-box",
@@ -112,7 +118,7 @@ env = suite.make(
     # Horizon is length of sim, we set it absurdly high since we want
     # the user to end the demo manually using controller input
     horizon=5000000,
-    use_initializer=True,
+    use_initializer=False,
     blocks=[box_r, box_g, box_b]
 )
 
@@ -124,7 +130,10 @@ env.visualize(vis_settings = { "robots": False, "grippers": True, "env": False }
 
 actuator_info = env.sim.data.qfrc_actuator
 gripper_id = env.sim.model.actuator_name2id('gripper0_right_finger_1')
-grip_strength = []
+attributes = { "skill_name": f"SK{time.time()}" if skill_name_in == "" else skill_name_in,
+               "grip_initial": False,
+               "grip_final": False,
+               "target_idx": int(skill_target_idx_in) if skill_target_idx_in.isnumeric() else -1 }
 eef_positions = [] 
 actions = []
 timestamps = []
@@ -219,14 +228,13 @@ while running:
             recording = not recording
             start_time = time.time()
             above_inplace(f"Recording {'started' if recording else 'ended'}")
+            attributes["grip_initial" if recording else "grip_final"] = controls.gripper == 1.0
     elif button_held[Input.TOGGLE_DEMO]:
         button_held[Input.TOGGLE_DEMO] = False
     if recording:
         actions.append(action)
         eef_positions.append(eef_pos)
         above_inplace(f"Current robot EE: {obs['robot0_eef_pos']}")
-        grip_strength.append(clamped)
-        above_inplace(f"Current robot grip strength: {clamped}")
         timestamps.append(time.time() - start_time)
         
     # Render at the control frequency
@@ -247,7 +255,6 @@ while running:
                 print_inplace.inplace_line_count = 0
                 actions.clear()
                 eef_positions.clear()
-                grip_strength.clear()
                 timestamps.clear()
                 start_time = time.time()
                 env.reset()
@@ -270,7 +277,7 @@ pygame.quit()
 
 # Determine next available file number in the demonstrations folder
 existing_files = os.listdir(folder_path)
-pattern = r"demo_(\d+)\.h5"
+pattern = f"demo_{attributes['skill_name']}_" + r'(\d+)\.h5'
 max_num = 0
 for filename in existing_files:
     m = re.match(pattern, filename)
@@ -279,17 +286,17 @@ for filename in existing_files:
         if num > max_num:
             max_num = num
 new_file_num = max_num + 1
-new_file_name = f"demo_{new_file_num}.h5"
+new_file_name = f"demo_{attributes['skill_name']}_{new_file_num}.h5"
 full_path = os.path.join(folder_path, new_file_name)
 
 # Save the demonstration data to the new file
 with h5py.File(full_path, "w") as f:
     print("Writing demonstration data...")
+    f.attrs.update(attributes)
     f.attrs["env_name"] = "Lift"
     f.attrs["robot"] = "UR5e"
     f.attrs["control_freq"] = env.control_freq
     f.create_dataset("timestamps", data=np.array(timestamps))
-    f.create_dataset("grip_strength", data=np.array(grip_strength))
     f.create_dataset("eef_positions", data=np.array(eef_positions))
     f.create_dataset("actions", data=np.array(actions))
 
