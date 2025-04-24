@@ -83,25 +83,19 @@ def above_inplace(output):
     height = print_inplace.inplace_line_count
     print(f"\033[{height}F{output}", end=f"\033[0K\033[{height}E\n{margin}", flush=True)
 
-# Prompt user for skill information
-print("\n ────────────────── Skill Info ──────────────────\n ────────────────────────────────────────────────\033[1F")
-skill_name_in = input(f"\033[2K   PDDL Action: \n ────────────────────────────────────────────────\033[1F\033[16C")
-skill_target_idx_in = input(f"\033[2K   PDDL Target Index: \n ────────────────────────────────────────────────\033[1F\033[22C")
-print("\033[1E\n")
-
 # Create cubes
 box_r = BoxObject(
-    name="red-box",
+    name="red",
     size=[0.02, 0.02, 0.02],
     rgba=[1, 0, 0, 1]
 )
 box_g = BoxObject(
-    name="green-box",
+    name="green",
     size=[0.02, 0.02, 0.02],
     rgba=[0, 1, 0, 1]
 )
 box_b = BoxObject(
-    name="blue-box",
+    name="blue",
     size=[0.02, 0.02, 0.02],
     rgba=[0, 0, 1, 1]
 )
@@ -122,6 +116,26 @@ env = suite.make(
     blocks=[box_r]
 )
 
+# Prompt user for skill information
+print("\n ────────────────── Skill Info ──────────────────\n ────────────────────────────────────────────────\033[1F")
+skill_name_in = input(f"\033[2K   PDDL Action: \n ────────────────────────────────────────────────\033[1F\033[16C")
+skill_target_idx_in = input(f"\033[2K   PDDL Target Index: \n ────────────────────────────────────────────────\033[1F\033[22C")
+ref_body_id = None
+if skill_target_idx_in != "":
+    skill_coord_ref = input(f"\033[2K   Demo Target Name: \n ────────────────────────────────────────────────\033[1F\033[21C")
+    bad_target_name = False
+    while not any(target.startswith(skill_coord_ref + "_") for target in env.sim.model.body_names):
+        bad_target_name = True
+        print(f"\033[2E\033[2K   \033[91mTarget {skill_coord_ref} not found in environment!\033[0m\n ────────────────────────────────────────────────", end="\033[2F")
+        skill_coord_ref = input(f"\033[2K   Demo Target Name: ")
+        print("\033[2F", end="")
+    possible_ref_names = [target for target in env.sim.model.body_names if target.startswith(skill_coord_ref + "_")]
+    ref_body_id = env.sim.model.body_name2id(possible_ref_names[0]) if skill_coord_ref != "" else None
+    if bad_target_name:
+        print("\033[2E\033[2K ────────────────────────────────────────────────", end="\n\033[2K\n")
+else:
+    print("\033[1E\n")
+
 obs = env.reset()
 running = True
 start_time = time.time()
@@ -134,6 +148,7 @@ attributes = { "skill_name": f"SK{time.time()}" if skill_name_in == "" else skil
                "grip_initial": False,
                "grip_final": False,
                "target_idx": int(skill_target_idx_in) if skill_target_idx_in.isnumeric() else -1 }
+position_offset = -env.sim.data.body_xpos[ref_body_id] if ref_body_id else None
 eef_positions = [] 
 actions = []
 timestamps = []
@@ -233,8 +248,8 @@ while running:
         button_held[Input.TOGGLE_DEMO] = False
     if recording:
         actions.append(action)
-        eef_positions.append(eef_pos)
-        above_inplace(f"Current robot EE: {obs['robot0_eef_pos']}")
+        eef_positions.append(eef_pos if position_offset is None else eef_pos + position_offset)
+        above_inplace(f"Current robot EE: {obs['robot0_eef_pos']}{'' if position_offset is None else f', Relative to object: {eef_pos + position_offset}'}")
         timestamps.append(time.time() - start_time)
         
     # Render at the control frequency

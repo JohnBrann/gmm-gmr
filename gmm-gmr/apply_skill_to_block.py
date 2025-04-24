@@ -40,13 +40,7 @@ def adjust_trajectory(trajectory, target_position):
     This simply computes the difference between the block_position and the last trajectory
     point and adds that offset to the entire trajectory.
     """
-    original_final_point = trajectory[-5]
-    offset = target_position - original_final_point
-    print("Original final trajectory point:", original_final_point)
-    print("Observed block position:", target_position)
-    print("Computed offset:", offset)
-    adjusted_trajectory = trajectory + offset
-    return adjusted_trajectory
+    return trajectory + target_position
 
 def move_to_target(env, target, grip_strength, control_interval=0.1, scaling=1.0, acceptance_threshold=0.02, max_steps=100):
     fixed_orientation = np.zeros(3)
