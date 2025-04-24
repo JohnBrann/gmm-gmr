@@ -28,6 +28,7 @@ for idx, file in enumerate(files):
         positions = np.array(f["eef_positions"]) 
 
     # Plot the 3D trajectory
+    ax_3d.axis('equal')
     ax_3d.plot(
         positions[:, 0],
         positions[:, 1],

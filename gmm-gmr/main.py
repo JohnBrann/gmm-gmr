@@ -146,6 +146,7 @@ def learn_skill(skill_demos):
     fig3d = plt.figure(figsize=(10, 8))
     ax3d  = fig3d.add_subplot(111, projection='3d')
     for i, demo in enumerate(demonstrations):
+        ax3d.axis('equal')
         ax3d.plot(
             demo[:, 0], demo[:, 1], demo[:, 2],
             linestyle='--',
@@ -153,6 +154,7 @@ def learn_skill(skill_demos):
             markersize=3,
             label=f'Demo {i}'
         )
+    ax3d.axis('equal')
     ax3d.plot(
         trj[:, 0], trj[:, 1], trj[:, 2],
         linewidth=2,
