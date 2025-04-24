@@ -41,7 +41,7 @@ env = suite.make(
     control_freq=20,
     ignore_done=True,
     controller_configs=controller_config,
-    use_initializer=False,
+    use_initializer=True,
     blocks=[box_r, box_g, box_b]
 )
 obs = env.reset()
@@ -178,7 +178,7 @@ if __name__ == "__main__":
     # Using planner for picking block TODO: make this better pathing wise and in general all the code
     base_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(base_dir)
-    solution_file = os.path.join(project_root, "tasks", "push", "task01.pddl.soln")
+    solution_file = os.path.join(project_root, "tasks", "pick_and_place", "task01.pddl.soln")
     if not os.path.isfile(solution_file):
         print(f"Solution file not found: {solution_file}")
         sys.exit()
@@ -200,7 +200,7 @@ if __name__ == "__main__":
         target = skill.get_target(parts[1:])
 
         # perform the pick‑and‑place skill
-        apply_skill_trajectory(skill, target, control_interval=0.1, scaling=5.0, acceptance_threshold=0.04)
+        apply_skill_trajectory(skill, target, control_interval=0.1, scaling=5.0, acceptance_threshold=0.02)
 
     env.close()
 
