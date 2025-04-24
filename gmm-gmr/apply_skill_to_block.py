@@ -11,43 +11,6 @@ import os
 import sys
 from skill import Skill
 
-# Create environment once
-
- # Create cubes
-box_r = BoxObject(
-    name="red",
-    size=[0.02, 0.02, 0.02],
-    rgba=[1, 0, 0, 1]
-)
-box_g = BoxObject(
-    name="green",
-    size=[0.02, 0.02, 0.02],
-    rgba=[0, 1, 0, 1]
-)
-box_b = BoxObject(
-    name="blue",
-    size=[0.02, 0.02, 0.02],
-    rgba=[0, 0, 1, 1]
-)
-
-
-controller_config = suite.load_composite_controller_config(robot="UR5e")
-env = suite.make(
-    env_name="PickPlaceCustom",
-    robots="UR5e",
-    has_renderer=True,
-    has_offscreen_renderer=False,
-    use_camera_obs=False,
-    control_freq=20,
-    ignore_done=True,
-    controller_configs=controller_config,
-    use_initializer=True,
-    blocks=[box_r, box_g, box_b]
-)
-obs = env.reset()
-env.render()
-time.sleep(1.0)
-
 
 def build_skill_library(skills_directory):
     skills = {}
@@ -172,13 +135,50 @@ if __name__ == "__main__":
         print("No skills available...")
         sys.exit()
 
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(base_dir)
+    solution_file = os.path.join(project_root, "tasks", "pick_and_place", "task02.pddl.soln")
+
+    # dynamically populate the environment depending on the expected blocks in the solution file
+    with open(solution_file) as f:
+        commands = [l.strip() for l in f if l.strip()]
+    colors = {cmd.strip("()").split()[1] for cmd in commands}
+
+    RGBA = {
+        "red":    [1.0, 0.0, 0.0, 1.0],
+        "green":  [0.0, 1.0, 0.0, 1.0],
+        "blue":   [0.0, 0.0, 1.0, 1.0],
+        "purple": [0.7, 0.0, 1.0, 1.0],
+        "orange": [1.0, 0.5, 0.0, 1.0],
+    }
+
+    blocks = [
+        BoxObject(name=c, size=[0.02]*3, rgba=RGBA[c])
+        for c in colors
+    ]
+
+    controller_config = suite.load_composite_controller_config(robot="UR5e")
+    env = suite.make(
+        env_name="PickPlaceCustom",
+        robots="UR5e",
+        has_renderer=True,
+        has_offscreen_renderer=False,
+        use_camera_obs=False,
+        control_freq=20,
+        ignore_done=True,
+        controller_configs=controller_config,
+        use_initializer=True,
+        blocks=blocks
+    )
+    obs = env.reset()
+    env.render()
+    time.sleep(2.0)
+
+
     skill_library = build_skill_library(skills_dir)
 
 
     # Using planner for picking block TODO: make this better pathing wise and in general all the code
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(base_dir)
-    solution_file = os.path.join(project_root, "tasks", "pick_and_place", "task01.pddl.soln")
     if not os.path.isfile(solution_file):
         print(f"Solution file not found: {solution_file}")
         sys.exit()

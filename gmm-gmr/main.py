@@ -80,78 +80,97 @@ def load_demonstrations(folder_path, dataset_key='eef_positions'):
 
 def learn_skill(skill_demos):
     demonstrations = skill_demos["demos"]
-    attrs = skill_demos["attrs"]
-    # for i, demo in enumerate(demonstrations):
-    #     print("Demonstration {} shape: {}".format(i, demo.shape))
+    attrs          = skill_demos["attrs"]
 
-    # Instantiate and fit the GMM_GMR model using the processed demonstrations.
+    # 1) Fit GMM-GMR
     gmm_gmr = GMM_GMR(demonstrations, 3, demo_duration=demo_duration)
     gmm_gmr.fit()
 
-    # Set up subplots for a 3-dimensional demonstration (x, y, z)
+    # 2) Prepare 2D subplot
     fig, axarr = plt.subplots(3, 1, figsize=(8, 12))
-
-    # Creates a time vector that spans from 0 to demo_duration seconds for each demonstration
-    for i in range(len(gmm_gmr.trajectories)):
-        T = gmm_gmr.trajectories[i].shape[0]
-        time_vec = np.linspace(0, demo_duration, T)
-        for j in range(3):
-            axarr[j].plot(time_vec,
-                          gmm_gmr.trajectories[i, :, j],
-                          linestyle=':',
-                          label='Demo {}'.format(i) if i == 0 else "")
-
-    for j in range(3):
-        axarr[j].scatter(gmm_gmr.centers_temporal,
-                         gmm_gmr.centers_spatial[:, j],
-                         label='centers')
-
-    # Generates an estimated trajectory using GMR
-
     num_samples = 100
-    times, trj = gmm_gmr.generate_trajectory(0.1, num_samples)
 
+    # 3) Plot each demo, remapped to 0…num_samples-1
+    for i, traj in enumerate(gmm_gmr.trajectories):
+        T        = traj.shape[0]
+        demo_t   = np.linspace(0, demo_duration, T)
+        demo_idx = demo_t / demo_duration * (num_samples - 1)
+
+        for j in range(3):
+            axarr[j].plot(
+                demo_idx,
+                traj[:, j],
+                linestyle=':',
+                label='Demo {}'.format(i) if i == 0 else ""
+            )
+
+    # 4) Plot Gaussian centers at their sample‐indices
+    center_idx = (gmm_gmr.centers_temporal / demo_duration * (num_samples - 1)).astype(int)
+    for j in range(3):
+        axarr[j].scatter(
+            center_idx,
+            gmm_gmr.centers_spatial[:, j],
+            s=50,
+            label='centers'
+        )
+
+    # 5) Generate & save the estimated trajectory
+    times, trj = gmm_gmr.generate_trajectory(0.1, num_samples)
     save_skill_to_h5(times, trj, attrs)
 
+    # 6) Plot the estimate on the same 0…99 axis
+    est_idx = np.arange(num_samples)
     for j in range(3):
-        axarr[j].plot(times, trj[:, j], label='estimated')
+        axarr[j].plot(
+            est_idx,
+            trj[:, j],
+            linewidth=2,
+            label='estimated'
+        )
 
+    # 7) Finalize labels, legend, title
     axarr[0].set_ylabel('Y')
     axarr[1].set_ylabel('X')
     axarr[2].set_ylabel('Z')
-    axarr[2].set_xlabel('Time (s)')
-    axarr[0].set_title(f'GMM-GMR: Demonstrations & Estimated Trajectory (EEF) for \'{attrs["skill_name"]}\' skill')
-
-    # Add legends and show the plot
+    axarr[2].set_xlabel('Sample index')
+    axarr[0].set_title(
+        f"GMM-GMR: Demonstrations & Estimated Trajectory (EEF) for '{attrs['skill_name']}'"
+    )
     for ax in axarr:
         ax.legend()
-
-    plt.savefig(os.path.join(plots_dir, f'gmm_gmr_{attrs["skill_name"]}_result.png'))
+    plt.tight_layout()
+    plt.savefig(os.path.join(plots_dir, f"gmm_gmr_{attrs['skill_name']}_result.png"))
     plt.show()
 
-    # 3D plots
+    # 8) (Optional) 3D plot remains unchanged:
     fig3d = plt.figure(figsize=(10, 8))
-    ax3d = fig3d.add_subplot(111, projection='3d')
-
+    ax3d  = fig3d.add_subplot(111, projection='3d')
     for i, demo in enumerate(demonstrations):
-        ax3d.plot(demo[:, 0], demo[:, 1], demo[:, 2], linestyle='--', marker='o', markersize=3,label=f'Demo {i}')
-
-    # Plot 3D trajectory
-    ax3d.plot(trj[:, 0], trj[:, 1], trj[:, 2],
-              linewidth=2, color='red', label='Estimated Trajectory')
-
+        ax3d.plot(
+            demo[:, 0], demo[:, 1], demo[:, 2],
+            linestyle='--',
+            marker='o',
+            markersize=3,
+            label=f'Demo {i}'
+        )
+    ax3d.plot(
+        trj[:, 0], trj[:, 1], trj[:, 2],
+        linewidth=2,
+        color='red',
+        label='Estimated Trajectory'
+    )
     ax3d.set_xlabel('X')
     ax3d.set_ylabel('Y')
     ax3d.set_zlabel('Z')
-    ax3d.set_title(f'3D Demonstrations and Estimated Trajectory for \'{attrs["skill_name"]}\' skill')
+    ax3d.set_title(f"3D Demonstrations & Estimated Trajectory for '{attrs['skill_name']}'")
     ax3d.legend()
-
-    plt.savefig(os.path.join(plots_dir, f'gmm_gmr_{attrs["skill_name"]}_result_3d.png'))
+    plt.savefig(os.path.join(plots_dir, f"gmm_gmr_{attrs['skill_name']}_result_3d.png"))
     plt.show()
 
 
+
 # Demonstration duration (seconds)
-demo_duration = 15.0
+demo_duration = 100.0
 
 sk_demos = load_demonstrations('../demonstration_collection/smoothed_demonstrations', dataset_key='eef_positions') # TODO: make better
 
