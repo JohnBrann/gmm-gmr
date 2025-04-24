@@ -187,7 +187,6 @@ if __name__ == "__main__":
     with open(solution_file, "r") as f:
         commands = [line.strip() for line in f if line.strip()]
 
-    # TODO: Make this so it also recognizes commands for place skill
     # we will have to make it so it does not reset the gripper to starting position unless the next task is pick
     # gripper still does not work, make continuous trajectory discrete,
     for cmd in commands:
