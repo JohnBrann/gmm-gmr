@@ -6,5 +6,3 @@
 (place green bin1)
 (pick orange table1)
 (place orange bin1)
-(pick purple table1)
-(place purple bin1)
