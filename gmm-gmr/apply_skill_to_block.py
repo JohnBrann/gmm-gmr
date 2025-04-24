@@ -136,7 +136,7 @@ if __name__ == "__main__":
     # dynamically populate the environment depending on the expected blocks in the solution file
     with open(solution_file) as f:
         commands = [l.strip() for l in f if l.strip()]
-    colors = {cmd.strip("()").split()[1] for cmd in commands}
+    colors = {cmd.strip("()").split()[1] for cmd in commands if len(cmd.strip("()").split()) > 1}
 
     RGBA = {
         "red":    [1.0, 0.0, 0.0, 1.0],
