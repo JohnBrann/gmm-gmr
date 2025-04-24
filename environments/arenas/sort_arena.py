@@ -12,39 +12,41 @@ class SortArena(TableArena):
     def __init__(self, colors=None):
         if colors is None:
             self.colors = [
-                (1.0, 0.0, 0.0, 0.8),
-                (0.0, 1.0, 0.0, 0.8),
-                (0.0, 0.0, 1.0, 0.8)
+                (1.0, 0.0, 0.0, 0.3),
+                (0.0, 1.0, 0.0, 0.3),
+                (0.0, 0.0, 1.0, 0.3)
             ]
         else:
             self.colors = colors
         self.plate_size = 0.05 if len(self.colors) > 8 else 0.4 / len(self.colors) if len(self.colors) > 2 else 0.15
         print(self.plate_size)
-        self.next_position = [-0.4 + self.plate_size, -0.4 + self.plate_size, 0.0375]
+        self.next_position = [-0.4 + self.plate_size, -0.4 + self.plate_size, 0.125]
         super().__init__()
     
-    def create_plate(self, color):
+    def create_plate(self, color, num):
         # Create body for colored plate, add to worldbody
-        plate_body = new_body(name=f"plate-{color}", pos=self.next_position)
+        plate_body = new_body(name=f"bin{num}_{color}", pos=self.next_position)
         self.worldbody.find("./body[@name='table']").append(plate_body)
         
         # Plate geom attributes
         plate_attribs = {
             "pos": (0, 0, 0),
-            "size": (self.plate_size * 0.95, 0.005),
+            "size": (self.plate_size * 0.95, 0.1),
             "type": "cylinder"
         }
         
-        collision = new_geom(name=f"plate-{color}_collision", group=0, friction=(1, 0.005, 0.0001), **plate_attribs)
-        visual = new_geom(name=f"plate-{color}_visual", group=1, conaffinity=0, contype=0, rgba=color, **plate_attribs)
-        plate_body.append(collision)
+        # collision = new_geom(name=f"plate-{color}_collision", group=0, friction=(1, 0.005, 0.0001), **plate_attribs)
+        visual = new_geom(name=f"bin{num}_visual", group=1, conaffinity=0, contype=0, rgba=color, **plate_attribs)
+        # plate_body.append(collision)
         plate_body.append(visual)
     
     def _postprocess_arena(self):
         min_coord = -0.4 + self.plate_size
         max_coord = 0.4 - self.plate_size
+        plate_num = 1
         for color in self.colors:
-            self.create_plate(color)
+            self.create_plate(color, plate_num)
+            plate_num += 1
             if self.next_position[0] + self.plate_size > max_coord:
                 if self.next_position[1] + self.plate_size > -0.05:
                     print("Ran out of space for new plates! (This isn't supposed to happen)")

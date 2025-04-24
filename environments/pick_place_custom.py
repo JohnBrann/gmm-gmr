@@ -47,7 +47,7 @@ class PickPlaceCustom(ManipulationEnv):
         # Set up default block if necessary
         if blocks is None:
             self.blocks = BoxObject(
-                name="red-box",
+                name="red",
                 size=[0.02, 0.02, 0.1],
                 rgba=[1, 0, 0, 1],
                 density=0,
