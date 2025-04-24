@@ -119,7 +119,7 @@ env = suite.make(
     # the user to end the demo manually using controller input
     horizon=5000000,
     use_initializer=False,
-    blocks=[box_r, box_g, box_b]
+    blocks=[box_r]
 )
 
 obs = env.reset()
