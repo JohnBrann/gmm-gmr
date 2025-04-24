@@ -82,15 +82,15 @@ def learn_skill(skill_demos):
     demonstrations = skill_demos["demos"]
     attrs          = skill_demos["attrs"]
 
-    # 1) Fit GMM-GMR
+    # Fit GMM-GMR
     gmm_gmr = GMM_GMR(demonstrations, 3, demo_duration=demo_duration)
     gmm_gmr.fit()
 
-    # 2) Prepare 2D subplot
+    # Prepare 2D subplot
     fig, axarr = plt.subplots(3, 1, figsize=(8, 12))
     num_samples = 100
 
-    # 3) Plot each demo, remapped to 0…num_samples-1
+    # Plot each demo, remapped to 0…num_samples-1
     for i, traj in enumerate(gmm_gmr.trajectories):
         T        = traj.shape[0]
         demo_t   = np.linspace(0, demo_duration, T)
@@ -104,7 +104,7 @@ def learn_skill(skill_demos):
                 label='Demo {}'.format(i) if i == 0 else ""
             )
 
-    # 4) Plot Gaussian centers at their sample‐indices
+    # Plot Gaussian centers at their sample‐indices
     center_idx = (gmm_gmr.centers_temporal / demo_duration * (num_samples - 1)).astype(int)
     for j in range(3):
         axarr[j].scatter(
@@ -114,11 +114,11 @@ def learn_skill(skill_demos):
             label='centers'
         )
 
-    # 5) Generate & save the estimated trajectory
+    # Generate & save the estimated trajectory
     times, trj = gmm_gmr.generate_trajectory(0.1, num_samples)
     save_skill_to_h5(times, trj, attrs)
 
-    # 6) Plot the estimate on the same 0…99 axis
+    # Plot the estimate on the same 0 - 99 axis
     est_idx = np.arange(num_samples)
     for j in range(3):
         axarr[j].plot(
