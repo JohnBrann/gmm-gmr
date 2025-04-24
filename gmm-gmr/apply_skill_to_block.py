@@ -160,7 +160,7 @@ def apply_skill_trajectory(skill, target, control_interval=0.1, scaling=1.0, acc
     # Hold the last position
     print("Reached final position.")
     hold_action = np.zeros(env.action_dim)
-    hold_action[6] = 1.0 if skill.grip_final() else 0.0
+    hold_action[6] = 1.0 if skill.grip_final() else -1.0
     for _ in range(20):
         _, _, _, _ = env.step(hold_action)
         env.render()
