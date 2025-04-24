@@ -174,6 +174,12 @@ if __name__ == "__main__":
     env.render()
     time.sleep(2.0)
 
+    # Allow objects to settle before running
+    for _ in range(20):
+        _, _, _, _ = env.step(np.zeros(env.action_dim))
+        env.render()
+        time.sleep(0.1)
+
 
     skill_library = build_skill_library(skills_dir)
 
@@ -198,6 +204,12 @@ if __name__ == "__main__":
 
         # perform the pick‑and‑place skill
         apply_skill_trajectory(skill, target, control_interval=0.1, scaling=5.0, acceptance_threshold=0.02)
+
+    # Hold for a few seconds before closing
+    for _ in range(20):
+        _, _, _, _ = env.step(np.zeros(env.action_dim))
+        env.render()
+        time.sleep(0.1)
 
     env.close()
 
