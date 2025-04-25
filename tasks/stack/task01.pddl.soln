@@ -1,0 +1,4 @@
+(pick green)
+(stack green blue)
+(pick red)
+(stack red green)
