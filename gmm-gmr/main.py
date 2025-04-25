@@ -25,18 +25,8 @@ def save_skill_to_h5(times, trajectory, attrs, folder_path="skills"):
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
     
-    # Determine the next available file number in the folder
-    existing_files = os.listdir(folder_path)
-    pattern = f"skill_{attrs['skill_name']}_" + r"(\d+)\.h5"
-    max_num = 0
-    for filename in existing_files:
-        m = re.match(pattern, filename)
-        if m:
-            num = int(m.group(1))
-            if num > max_num:
-                max_num = num
-    new_file_num = max_num + 1
-    new_file_name = f"skill_{attrs['skill_name']}_{new_file_num}.h5"
+    # Create using skill name
+    new_file_name = f"skill_{attrs['skill_name']}.h5"
     full_path = os.path.join(folder_path, new_file_name)
     
     # Save data
