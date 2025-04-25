@@ -1,3 +1,4 @@
+import re
 import sys
 sys.path.append('..')
 import time
@@ -131,12 +132,14 @@ if __name__ == "__main__":
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(base_dir)
-    solution_file = os.path.join(project_root, "tasks", "pick_and_place", "task02.pddl.soln")
+    task_file = os.path.join(project_root, "tasks", "stack", "task01.pddl")
+    solution_file = task_file + ".soln"
 
     # dynamically populate the environment depending on the expected blocks in the solution file
-    with open(solution_file) as f:
-        commands = [l.strip() for l in f if l.strip()]
-    colors = {cmd.strip("()").split()[1] for cmd in commands if len(cmd.strip("()").split()) > 1}
+    pattern = r"\s+((?:\w+\s)+).*\s*-\s+block"
+    with open(task_file) as f:
+        colors = re.findall(pattern, f.read(), re.S)[0].strip().split()
+
 
     RGBA = {
         "red":    [1.0, 0.0, 0.0, 1.0],
